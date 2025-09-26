@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeamSpeed Network Migration Tracker - SharePoint</title>
+    <title>BeamSpeed Network Migration Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -58,6 +59,14 @@
         .header .subtitle {
             font-size: 1.2em;
             opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header .date {
+            margin-top: 15px;
+            font-size: 1em;
+            opacity: 0.8;
             position: relative;
             z-index: 1;
         }
@@ -137,6 +146,17 @@
             box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
         }
         
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.4);
+        }
+        
         .btn-danger {
             background: #ef4444;
             color: white;
@@ -163,28 +183,6 @@
             outline: none;
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .config-panel {
-            background: #fef3c7;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            border: 2px solid #fbbf24;
-        }
-        
-        .config-panel h2 {
-            color: #92400e;
-            margin-bottom: 15px;
-        }
-        
-        .config-input {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #fbbf24;
-            border-radius: 4px;
-            font-size: 14px;
         }
         
         .table-container {
@@ -216,6 +214,23 @@
             white-space: nowrap;
             cursor: pointer;
             user-select: none;
+            transition: background 0.3s ease;
+        }
+        
+        th:hover:not(.category-header):not(:last-child) {
+            background: #e9ecef;
+        }
+        
+        th.sorted-asc::after {
+            content: ' ▲';
+            color: #2563eb;
+            font-size: 0.8em;
+        }
+        
+        th.sorted-desc::after {
+            content: ' ▼';
+            color: #2563eb;
+            font-size: 0.8em;
         }
         
         .category-header {
@@ -231,6 +246,11 @@
             border-bottom: 1px solid #e9ecef;
             white-space: nowrap;
             position: relative;
+            overflow: visible;
+        }
+        
+        td:hover .editable {
+            min-width: 120px;
         }
         
         tr:hover {
@@ -288,46 +308,10 @@
             padding-right: 35px !important;
         }
         
-        .status-active {
-            background: #10b981;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-shutdown {
-            background: #f59e0b;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-inactive {
-            background: #ef4444;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
         .loading {
             text-align: center;
             padding: 40px;
             color: #6b7280;
-        }
-        
-        .error {
-            background: #fee;
-            color: #c00;
-            padding: 20px;
-            margin: 20px;
-            border-radius: 8px;
-            border: 1px solid #fcc;
         }
         
         .footer {
@@ -369,59 +353,67 @@
             font-size: 0.9em;
             margin-top: 5px;
         }
+        
+        .actions-column {
+            text-align: center;
+            width: 80px;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <div class="sync-status" id="syncStatus">🔄 Connecting...</div>
+            <div class="sync-status" id="syncStatus">✅ Connected to Supabase</div>
             <div class="logo">resound</div>
             <h1>BeamSpeed Network Migration Tracker</h1>
-            <div class="subtitle">SharePoint Integrated - Multi-User Edition</div>
+            <div class="subtitle">Real-Time Multi-User Dashboard</div>
             <div class="date">Project Timeline: Q4 2025 - Q1 2026</div>
         </div>
         
-        <!-- Configuration Panel - Remove this after setup -->
-        <div class="config-panel" id="configPanel">
-            <h2>⚙️ First-Time Setup Required</h2>
-            <p>Please enter your SharePoint details:</p>
-            <input type="text" class="config-input" id="siteUrl" placeholder="SharePoint Site URL (e.g., https://yourcompany.sharepoint.com/sites/YourSite)">
-            <input type="text" class="config-input" id="listName" placeholder="List Name (e.g., BeamSpeed_Migration_Tracker)">
-            <button class="btn btn-success" onclick="saveConfig()">Save Configuration & Connect</button>
-            <p style="margin-top: 10px; font-size: 12px;">This panel will disappear after successful connection.</p>
-        </div>
-        
-        <div class="controls" style="display: none;" id="mainControls">
-            <button class="btn btn-primary" onclick="refreshData()">🔄 Refresh</button>
+        <div class="controls">
+            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh</button>
             <button class="btn btn-success" onclick="addRow()">➕ Add Site</button>
             <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
             <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
+            <button class="btn btn-primary" onclick="sortTable('sitename')">🏢 Sort by Site Name</button>
+            <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
             <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
         </div>
         
         <div class="footer">
             <div class="stats">
                 <div class="stat-card">
-                    <div class="stat-value" id="totalSites">-</div>
+                    <div class="stat-value" id="totalSites">0</div>
                     <div class="stat-label">Total Sites</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="activeDevices">-</div>
+                    <div class="stat-value" id="activeDevices">0</div>
                     <div class="stat-label">Active Devices</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="pendingMigration">-</div>
+                    <div class="stat-value" id="pendingMigration">0</div>
                     <div class="stat-label">Pending Migration</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-value" id="completed">-</div>
+                    <div class="stat-value" id="completed">0</div>
                     <div class="stat-label">Completed</div>
                 </div>
             </div>
         </div>
         
         <div class="table-container">
-            <div class="loading" id="loadingMessage">Waiting for configuration...</div>
+            <div class="loading" id="loadingMessage">Loading data from Supabase...</div>
             <table id="migrationTable" style="display: none;">
                 <thead>
                     <tr>
@@ -432,100 +424,294 @@
                         <th colspan="1" class="category-header">ACTIONS</th>
                     </tr>
                     <tr>
-                        <th>Site ID</th>
-                        <th>Site Name</th>
-                        <th>Site Type</th>
-                        <th>Physical Address</th>
-                        <th>Access Info</th>
-                        <th>Device Name</th>
-                        <th>Device Type</th>
-                        <th>Management IP</th>
-                        <th>Username</th>
+                        <th onclick="sortTable('siteid')">Site ID</th>
+                        <th onclick="sortTable('sitename')">Site Name</th>
+                        <th onclick="sortTable('sitetype')">Site Type</th>
+                        <th onclick="sortTable('physicaladdress')">Physical Address</th>
+                        <th onclick="sortTable('accessinfo')">Access Info</th>
+                        <th onclick="sortTable('devicename')">Device Name</th>
+                        <th onclick="sortTable('devicetype')">Device Type</th>
+                        <th onclick="sortTable('managementip')">Management IP</th>
+                        <th onclick="sortTable('username')">Username</th>
                         <th>Password</th>
-                        <th>Status</th>
-                        <th>Circuit ID</th>
-                        <th>ISP/Provider</th>
-                        <th>Bandwidth</th>
-                        <th>Customer Count</th>
-                        <th>Migration Phase</th>
-                        <th>Migration Date</th>
-                        <th>Priority</th>
+                        <th onclick="sortTable('status')">Status</th>
+                        <th onclick="sortTable('circuitid')">Circuit ID</th>
+                        <th onclick="sortTable('ispprovider')">ISP/Provider</th>
+                        <th onclick="sortTable('bandwidth')">Bandwidth</th>
+                        <th onclick="sortTable('customercount')">Customer Count</th>
+                        <th onclick="sortTable('migrationphase')">Migration Phase</th>
+                        <th onclick="sortTable('migrationdate')">Migration Date</th>
+                        <th onclick="sortTable('priority')">Priority</th>
                         <th>Notes</th>
-                        <th>Actions</th>
+                        <th>Delete</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                 </tbody>
             </table>
         </div>
     </div>
     
     <script>
-        // Configuration
-        let CONFIG = {
-            siteUrl: '',
-            listName: '',
-            refreshInterval: 30000 // 30 seconds
-        };
+        // Initialize Supabase
+        const supabaseUrl = 'https://lutaijsslnpgvnbwbatt.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGFpanNzbG5wZ3ZuYndiYXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4NTY0MzksImV4cCI6MjA3NDQzMjQzOX0.L1CtWNA1XTsIHETX4ITft9UusGmPZ2BQwPUSoHYZgqc';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseKey);
         
-        let allItems = [];
-        let refreshTimer = null;
-        let undoHistory = []; // Store last 10 changes for undo
+        let allData = [];
+        let undoHistory = [];
         const MAX_UNDO_HISTORY = 10;
+        let sortDirection = 'asc';
+        let passwordIdCounter = 1;
         
-        // Load saved configuration
-        function loadConfig() {
-            const saved = localStorage.getItem('sharepointConfig');
-            if (saved) {
-                CONFIG = JSON.parse(saved);
-                document.getElementById('siteUrl').value = CONFIG.siteUrl;
-                document.getElementById('listName').value = CONFIG.listName;
-                if (CONFIG.siteUrl && CONFIG.listName) {
-                    connectToSharePoint();
+        // Load data from Supabase
+        async function loadData() {
+            document.getElementById('syncStatus').textContent = '🔄 Loading...';
+            document.getElementById('syncStatus').classList.add('syncing');
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .select('*')
+                    .order('id', { ascending: true });
+                
+                if (error) throw error;
+                
+                allData = data || [];
+                renderTable();
+                updateStats();
+                
+                document.getElementById('syncStatus').textContent = '✅ Connected to Supabase';
+                document.getElementById('syncStatus').classList.remove('syncing');
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('syncStatus').textContent = '❌ Connection Failed';
+                document.getElementById('syncStatus').classList.remove('syncing');
+            }
+        }
+        
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            document.getElementById('migrationTable').style.display = 'table';
+            document.getElementById('loadingMessage').style.display = 'none';
+            
+            allData.forEach(item => {
+                const row = tbody.insertRow();
+                row.setAttribute('data-id', item.id);
+                
+                // Site Information
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.siteid || ''}" data-field="siteid" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.sitename || ''}" data-field="sitename" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `
+                    <select class="editable" data-field="sitetype" onchange="updateCell(this, ${item.id})">
+                        <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
+                        <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
+                        <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
+                        <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
+                    </select>`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.physicaladdress || ''}" data-field="physicaladdress" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.accessinfo || ''}" data-field="accessinfo" onchange="updateCell(this, ${item.id})">`;
+                
+                // Network Details
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicename || ''}" data-field="devicename" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicetype || ''}" data-field="devicetype" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.managementip || ''}" data-field="managementip" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.username || ''}" data-field="username" onchange="updateCell(this, ${item.id})">`;
+                
+                // Password field with toggle
+                const pwdId = 'pwd-' + passwordIdCounter++;
+                row.insertCell().innerHTML = `
+                    <div class="password-container">
+                        <input type="password" class="editable password-input" value="${item.password || ''}" data-field="password" id="${pwdId}" onchange="updateCell(this, ${item.id})">
+                        <button class="password-toggle" onclick="togglePassword('${pwdId}')">👁️</button>
+                    </div>`;
+                
+                // Status with color
+                const statusCell = row.insertCell();
+                statusCell.innerHTML = `
+                    <select class="editable" data-field="status" onchange="updateCell(this, ${item.id}); updateStatusColor(this)">
+                        <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+                        <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
+                        <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>`;
+                updateStatusColor(statusCell.querySelector('select'));
+                
+                // Connectivity
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.circuitid || ''}" data-field="circuitid" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.ispprovider || ''}" data-field="ispprovider" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.bandwidth || ''}" data-field="bandwidth" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="number" class="editable" value="${item.customercount || ''}" data-field="customercount" onchange="updateCell(this, ${item.id})">`;
+                
+                // Migration
+                row.insertCell().innerHTML = `
+                    <select class="editable" data-field="migrationphase" onchange="updateCell(this, ${item.id})">
+                        <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
+                        <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
+                        <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
+                        <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
+                    </select>`;
+                
+                const dateValue = item.migrationdate ? item.migrationdate.split('T')[0] : '';
+                row.insertCell().innerHTML = `<input type="date" class="editable" value="${dateValue}" data-field="migrationdate" onchange="updateCell(this, ${item.id})">`;
+                
+                const priorityCell = row.insertCell();
+                priorityCell.innerHTML = `
+                    <select class="editable" data-field="priority" onchange="updateCell(this, ${item.id}); updatePriorityColor(this)">
+                        <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
+                        <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                        <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
+                    </select>`;
+                updatePriorityColor(priorityCell.querySelector('select'));
+                
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.notes || ''}" data-field="notes" onchange="updateCell(this, ${item.id})">`;
+                
+                // Action
+                row.insertCell().innerHTML = `<button class="btn btn-danger" onclick="deleteRow(${item.id})">❌</button>`;
+            });
+        }
+        
+        // Update cell in Supabase
+        async function updateCell(element, id) {
+            const field = element.getAttribute('data-field');
+            let value = element.value;
+            
+            // Find the old value for undo
+            const oldItem = allData.find(item => item.id === id);
+            const oldValue = oldItem ? oldItem[field] : '';
+            
+            // Add to undo history
+            addToUndoHistory('update', id, field, oldValue, value);
+            
+            // Handle number fields
+            if (field === 'customercount') {
+                value = parseInt(value) || 0;
+            }
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .update({ [field]: value })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                // Update local data
+                const index = allData.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    allData[index][field] = value;
+                }
+                
+                showSaveIndicator();
+                updateStats();
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Failed to save changes. Please try again.');
+                element.value = oldValue;
+            }
+        }
+        
+        // Add new row
+        async function addRow() {
+            const newRow = {
+                siteid: 'NEW-SITE',
+                sitename: 'New Site',
+                sitetype: 'Cabinet',
+                physicaladdress: '',
+                accessinfo: '',
+                devicename: '',
+                devicetype: '',
+                managementip: '',
+                username: '',
+                password: '',
+                status: 'Active',
+                circuitid: '',
+                ispprovider: '',
+                bandwidth: '',
+                customercount: 0,
+                migrationphase: 'Phase 1',
+                migrationdate: null,
+                priority: 'Medium',
+                notes: ''
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert([newRow])
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    allData.push(data[0]);
+                    renderTable();
+                    updateStats();
+                    
+                    // Scroll to new row
+                    const rows = document.querySelectorAll('#tableBody tr');
+                    if (rows.length > 0) {
+                        rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    addToUndoHistory('add', data[0].id, null, null, data[0]);
+                }
+                
+            } catch (error) {
+                console.error('Add error:', error);
+                alert('Failed to add new site. Please try again.');
+            }
+        }
+        
+        // Delete row
+        async function deleteRow(id) {
+            if (confirm('Are you sure you want to delete this site?')) {
+                const deletedItem = allData.find(item => item.id === id);
+                
+                try {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    addToUndoHistory('delete', id, null, deletedItem, null);
+                    
+                    allData = allData.filter(item => item.id !== id);
+                    renderTable();
+                    updateStats();
+                    
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Failed to delete site. Please try again.');
                 }
             }
         }
         
-        // Save configuration
-        function saveConfig() {
-            CONFIG.siteUrl = document.getElementById('siteUrl').value.trim();
-            CONFIG.listName = document.getElementById('listName').value.trim();
-            
-            if (!CONFIG.siteUrl || !CONFIG.listName) {
-                alert('Please enter both Site URL and List Name');
-                return;
-            }
-            
-            // Remove trailing slash if present
-            if (CONFIG.siteUrl.endsWith('/')) {
-                CONFIG.siteUrl = CONFIG.siteUrl.slice(0, -1);
-            }
-            
-            localStorage.setItem('sharepointConfig', JSON.stringify(CONFIG));
-            connectToSharePoint();
-        }
-        
-        // Add to undo history
-        function addToUndoHistory(action, itemId, field, oldValue, newValue) {
+        // Undo functionality
+        function addToUndoHistory(action, id, field, oldValue, newValue) {
             undoHistory.unshift({
                 action: action,
-                itemId: itemId,
+                id: id,
                 field: field,
                 oldValue: oldValue,
-                newValue: newValue,
-                timestamp: new Date()
+                newValue: newValue
             });
             
-            // Keep only last 10 changes
             if (undoHistory.length > MAX_UNDO_HISTORY) {
                 undoHistory = undoHistory.slice(0, MAX_UNDO_HISTORY);
             }
         }
         
-        // Undo last change
         async function undoLastChange() {
             if (undoHistory.length === 0) {
-                showUndoNotification('No changes to undo');
+                alert('No changes to undo');
                 return;
             }
             
@@ -533,444 +719,62 @@
             
             try {
                 if (lastChange.action === 'update') {
-                    // Revert the field to old value
-                    const updateData = {
-                        __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` }
-                    };
-                    updateData[lastChange.field] = lastChange.oldValue;
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .update({ [lastChange.field]: lastChange.oldValue })
+                        .eq('id', lastChange.id);
                     
-                    const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items(${lastChange.itemId})`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json;odata=verbose',
-                            'Content-Type': 'application/json;odata=verbose',
-                            'X-HTTP-Method': 'MERGE',
-                            'IF-MATCH': '*',
-                            'X-RequestDigest': await getRequestDigest()
-                        },
-                        body: JSON.stringify(updateData),
-                        credentials: 'same-origin'
-                    });
-                    
-                    if (!response.ok && response.status !== 204) {
-                        throw new Error('Undo failed');
-                    }
-                    
-                    showUndoNotification(`Undone: ${lastChange.field} reverted to "${lastChange.oldValue}"`);
-                    await refreshData();
+                    if (error) throw error;
                     
                 } else if (lastChange.action === 'delete') {
-                    // Re-add the deleted item
-                    const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json;odata=verbose',
-                            'Content-Type': 'application/json;odata=verbose',
-                            'X-RequestDigest': await getRequestDigest()
-                        },
-                        body: JSON.stringify(lastChange.oldValue),
-                        credentials: 'same-origin'
-                    });
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .insert([lastChange.oldValue]);
                     
-                    if (!response.ok) {
-                        throw new Error('Undo delete failed');
-                    }
-                    
-                    showUndoNotification('Undone: Site restored');
-                    await refreshData();
+                    if (error) throw error;
                     
                 } else if (lastChange.action === 'add') {
-                    // Delete the newly added item
-                    await deleteItemSilent(lastChange.itemId);
-                    showUndoNotification('Undone: New site removed');
-                    await refreshData();
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .eq('id', lastChange.id);
+                    
+                    if (error) throw error;
                 }
+                
+                await loadData();
+                showUndoIndicator();
                 
             } catch (error) {
                 console.error('Undo error:', error);
-                showUndoNotification('Undo failed - please refresh', true);
-                // Put the change back in history since it failed
+                alert('Failed to undo change. Please refresh and try again.');
                 undoHistory.unshift(lastChange);
             }
         }
         
-        // Show undo notification
-        function showUndoNotification(message, isError = false) {
-            let notification = document.getElementById('undoNotification');
-            if (!notification) {
-                notification = document.createElement('div');
-                notification.id = 'undoNotification';
-                notification.className = 'undo-notification';
-                document.body.appendChild(notification);
-            }
-            
-            notification.style.background = isError ? '#ef4444' : '#f59e0b';
-            notification.innerHTML = `↩️ ${message}`;
-            notification.style.opacity = '1';
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-            }, 3000);
-        }
-        
-        // Connect to SharePoint
-        async function connectToSharePoint() {
-            document.getElementById('syncStatus').textContent = '🔄 Connecting...';
-            document.getElementById('syncStatus').classList.add('syncing');
+        // Sort table
+        async function sortTable(column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
             
             try {
-                await loadSharePointData();
-                document.getElementById('configPanel').style.display = 'none';
-                document.getElementById('mainControls').style.display = 'flex';
-                document.getElementById('migrationTable').style.display = 'table';
-                document.getElementById('loadingMessage').style.display = 'none';
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .select('*')
+                    .order(column, { ascending: sortDirection === 'asc' });
                 
-                // Start auto-refresh
-                if (refreshTimer) clearInterval(refreshTimer);
-                refreshTimer = setInterval(refreshData, CONFIG.refreshInterval);
+                if (error) throw error;
                 
-                document.getElementById('syncStatus').textContent = '✅ Connected';
-                document.getElementById('syncStatus').classList.remove('syncing');
+                allData = data || [];
+                renderTable();
+                
             } catch (error) {
-                console.error('Connection error:', error);
-                document.getElementById('syncStatus').textContent = '❌ Connection Failed';
-                document.getElementById('syncStatus').classList.remove('syncing');
-                alert('Failed to connect to SharePoint. Please check your configuration and permissions.\n\nError: ' + error.message);
+                console.error('Sort error:', error);
             }
-        }
-        
-        // Load data from SharePoint List
-        async function loadSharePointData() {
-            const apiUrl = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$top=5000`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json;odata=verbose',
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            allItems = data.d.results;
-            renderTable();
-            updateStats();
-        }
-        
-        // Render table with SharePoint data
-        function renderTable() {
-            const tbody = document.querySelector('#migrationTable tbody');
-            tbody.innerHTML = '';
-            
-            allItems.forEach(item => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', item.Id);
-                
-                // Create cells with data
-                const cells = [
-                    createEditableCell(item.SiteID || '', 'text', 'SiteID'),
-                    createEditableCell(item.SiteName || '', 'text', 'SiteName'),
-                    createSelectCell(item.SiteType || 'Cabinet', ['Data Center', 'Tower Site', 'Cabinet', 'Office'], 'SiteType'),
-                    createEditableCell(item.PhysicalAddress || '', 'text', 'PhysicalAddress'),
-                    createEditableCell(item.AccessInfo || '', 'text', 'AccessInfo'),
-                    createEditableCell(item.DeviceName || '', 'text', 'DeviceName'),
-                    createEditableCell(item.DeviceType || '', 'text', 'DeviceType'),
-                    createEditableCell(item.ManagementIP || '', 'text', 'ManagementIP'),
-                    createEditableCell(item.Username || '', 'text', 'Username'),
-                    createPasswordCell(item.Password || '', 'Password'),
-                    createSelectCell(item.Status || 'Active', ['Active', 'Shutdown', 'Inactive'], 'Status'),
-                    createEditableCell(item.CircuitID || '', 'text', 'CircuitID'),
-                    createEditableCell(item.ISPProvider || '', 'text', 'ISPProvider'),
-                    createEditableCell(item.Bandwidth || '', 'text', 'Bandwidth'),
-                    createEditableCell(item.CustomerCount || '', 'number', 'CustomerCount'),
-                    createSelectCell(item.MigrationPhase || 'Phase 1', ['Phase 1', 'Phase 2', 'Phase 3', 'Complete'], 'MigrationPhase'),
-                    createEditableCell(formatDate(item.MigrationDate), 'date', 'MigrationDate'),
-                    createSelectCell(item.Priority || 'Medium', ['High', 'Medium', 'Low'], 'Priority'),
-                    createEditableCell(item.Notes || '', 'text', 'Notes'),
-                    createActionCell(item.Id)
-                ];
-                
-                cells.forEach(cellHtml => {
-                    const cell = row.insertCell();
-                    cell.innerHTML = cellHtml;
-                });
-                
-                // Apply status colors
-                const statusSelect = row.cells[10].querySelector('select');
-                if (statusSelect) updateStatusColor(statusSelect);
-            });
-        }
-        
-        // Helper functions to create cells
-        function createEditableCell(value, type, field) {
-            return `<input type="${type}" class="editable" value="${value}" data-field="${field}" data-original="${value}" onchange="updateItem(this)" onfocus="this.setAttribute('data-original', this.value)">`;
-        }
-        
-        function createSelectCell(value, options, field) {
-            const optionsHtml = options.map(opt => 
-                `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`
-            ).join('');
-            const onchange = field === 'Status' ? 'onchange="updateStatusColor(this); updateItem(this)"' : 'onchange="updateItem(this)"';
-            return `<select class="editable" data-field="${field}" data-original="${value}" ${onchange} onfocus="this.setAttribute('data-original', this.value)">${optionsHtml}</select>`;
-        }
-        
-        function createPasswordCell(value, field) {
-            const id = 'pwd-' + Math.random().toString(36).substr(2, 9);
-            return `<div class="password-container">
-                <input type="password" class="editable password-input" value="${value}" data-field="${field}" data-original="${value}" id="${id}" onchange="updateItem(this)" onfocus="this.setAttribute('data-original', this.value)">
-                <button class="password-toggle" onclick="togglePassword('${id}')">👁️</button>
-            </div>`;
-        }
-        
-        function createActionCell(itemId) {
-            return `<button class="btn btn-danger" onclick="deleteItem(${itemId})">❌</button>`;
-        }
-        
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toISOString().split('T')[0];
-        }
-        
-        // Update item in SharePoint
-        async function updateItem(element) {
-            const row = element.closest('tr');
-            const itemId = row.getAttribute('data-id');
-            const field = element.getAttribute('data-field');
-            const oldValue = element.getAttribute('data-original');
-            let value = element.value;
-            
-            // Handle date field
-            if (element.type === 'date' && value) {
-                value = new Date(value).toISOString();
-            }
-            
-            // Handle number field
-            if (field === 'CustomerCount' && value) {
-                value = parseInt(value) || 0;
-            }
-            
-            // Add to undo history
-            addToUndoHistory('update', itemId, field, oldValue, value);
-            
-            const updateData = {
-                __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` }
-            };
-            updateData[field] = value;
-            
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items(${itemId})`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose',
-                        'X-HTTP-Method': 'MERGE',
-                        'IF-MATCH': '*',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    body: JSON.stringify(updateData),
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok && response.status !== 204) {
-                    throw new Error('Update failed');
-                }
-                
-                showSaveIndicator();
-                element.setAttribute('data-original', value); // Update the original value after successful save
-            } catch (error) {
-                console.error('Update error:', error);
-                alert('Failed to save changes. Please refresh and try again.');
-                // Remove from undo history if update failed
-                undoHistory.shift();
-            }
-        }
-        
-        // Add new item to SharePoint
-        async function addRow() {
-            const newItem = {
-                __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` },
-                SiteID: 'NEW-SITE',
-                SiteName: 'New Site',
-                SiteType: 'Cabinet',
-                Status: 'Active',
-                MigrationPhase: 'Phase 1',
-                Priority: 'Medium'
-            };
-            
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    body: JSON.stringify(newItem),
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to add item');
-                }
-                
-                const data = await response.json();
-                addToUndoHistory('add', data.d.Id, null, null, newItem);
-                
-                await refreshData();
-            } catch (error) {
-                console.error('Add error:', error);
-                alert('Failed to add new site. Please check your permissions.');
-            }
-        }
-        
-        // Delete item from SharePoint
-        async function deleteItem(itemId) {
-            if (!confirm('Are you sure you want to delete this site?')) return;
-            
-            // Get the item data before deleting for undo
-            const item = allItems.find(i => i.Id === itemId);
-            if (item) {
-                const itemData = {
-                    __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` },
-                    SiteID: item.SiteID,
-                    SiteName: item.SiteName,
-                    SiteType: item.SiteType,
-                    PhysicalAddress: item.PhysicalAddress,
-                    AccessInfo: item.AccessInfo,
-                    DeviceName: item.DeviceName,
-                    DeviceType: item.DeviceType,
-                    ManagementIP: item.ManagementIP,
-                    Username: item.Username,
-                    Password: item.Password,
-                    Status: item.Status,
-                    CircuitID: item.CircuitID,
-                    ISPProvider: item.ISPProvider,
-                    Bandwidth: item.Bandwidth,
-                    CustomerCount: item.CustomerCount,
-                    MigrationPhase: item.MigrationPhase,
-                    MigrationDate: item.MigrationDate,
-                    Priority: item.Priority,
-                    Notes: item.Notes
-                };
-                addToUndoHistory('delete', itemId, null, itemData, null);
-            }
-            
-            await deleteItemSilent(itemId);
-            await refreshData();
-        }
-        
-        // Silent delete (for undo of adds)
-        async function deleteItemSilent(itemId) {
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items(${itemId})`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'X-HTTP-Method': 'DELETE',
-                        'IF-MATCH': '*',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok && response.status !== 204) {
-                    throw new Error('Delete failed');
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                throw error;
-            }
-        }
-        
-        // Get Request Digest for SharePoint REST API
-        async function getRequestDigest() {
-            const response = await fetch(`${CONFIG.siteUrl}/_api/contextinfo`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json;odata=verbose',
-                    'Content-Type': 'application/json;odata=verbose'
-                },
-                credentials: 'same-origin'
-            });
-            
-            const data = await response.json();
-            return data.d.GetContextWebInformation.FormDigestValue;
-        }
-        
-        // Refresh data
-        async function refreshData() {
-            document.getElementById('syncStatus').textContent = '🔄 Refreshing...';
-            document.getElementById('syncStatus').classList.add('syncing');
-            
-            try {
-                await loadSharePointData();
-                document.getElementById('syncStatus').textContent = '✅ Connected';
-            } catch (error) {
-                document.getElementById('syncStatus').textContent = '⚠️ Refresh Failed';
-            } finally {
-                document.getElementById('syncStatus').classList.remove('syncing');
-            }
-        }
-        
-        // Toggle password visibility
-        function togglePassword(inputId) {
-            const input = document.getElementById(inputId);
-            const button = input.nextElementSibling;
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                button.textContent = '🙈';
-            } else {
-                input.type = 'password';
-                button.textContent = '👁️';
-            }
-        }
-        
-        // Update status color
-        function updateStatusColor(select) {
-            switch(select.value) {
-                case 'Active':
-                    select.style.background = '#10b981';
-                    select.style.color = 'white';
-                    break;
-                case 'Shutdown':
-                    select.style.background = '#f59e0b';
-                    select.style.color = 'white';
-                    break;
-                case 'Inactive':
-                    select.style.background = '#ef4444';
-                    select.style.color = 'white';
-                    break;
-            }
-        }
-        
-        // Show save indicator
-        function showSaveIndicator() {
-            let indicator = document.getElementById('saveIndicator');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'saveIndicator';
-                indicator.style.cssText = 'position: fixed; top: 70px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999; transition: opacity 0.3s;';
-                document.body.appendChild(indicator);
-            }
-            
-            indicator.textContent = '✓ Saved to SharePoint';
-            indicator.style.opacity = '1';
-            
-            setTimeout(() => {
-                indicator.style.opacity = '0';
-            }, 2000);
         }
         
         // Filter table
         function filterTable(searchTerm) {
-            const rows = document.querySelectorAll('#migrationTable tbody tr');
+            const rows = document.querySelectorAll('#tableBody tr');
             searchTerm = searchTerm.toLowerCase();
             
             rows.forEach(row => {
@@ -995,27 +799,27 @@
             let csvContent = "data:text/csv;charset=utf-8,";
             csvContent += "Site ID,Site Name,Site Type,Physical Address,Access Info,Device Name,Device Type,Management IP,Username,Password,Status,Circuit ID,ISP Provider,Bandwidth,Customer Count,Migration Phase,Migration Date,Priority,Notes\n";
             
-            allItems.forEach(item => {
+            allData.forEach(item => {
                 const row = [
-                    item.SiteID || '',
-                    item.SiteName || '',
-                    item.SiteType || '',
-                    item.PhysicalAddress || '',
-                    item.AccessInfo || '',
-                    item.DeviceName || '',
-                    item.DeviceType || '',
-                    item.ManagementIP || '',
-                    item.Username || '',
-                    item.Password || '',
-                    item.Status || '',
-                    item.CircuitID || '',
-                    item.ISPProvider || '',
-                    item.Bandwidth || '',
-                    item.CustomerCount || '',
-                    item.MigrationPhase || '',
-                    item.MigrationDate ? new Date(item.MigrationDate).toLocaleDateString() : '',
-                    item.Priority || '',
-                    item.Notes || ''
+                    item.siteid || '',
+                    item.sitename || '',
+                    item.sitetype || '',
+                    item.physicaladdress || '',
+                    item.accessinfo || '',
+                    item.devicename || '',
+                    item.devicetype || '',
+                    item.managementip || '',
+                    item.username || '',
+                    item.password || '',
+                    item.status || '',
+                    item.circuitid || '',
+                    item.ispprovider || '',
+                    item.bandwidth || '',
+                    item.customercount || '',
+                    item.migrationphase || '',
+                    item.migrationdate || '',
+                    item.priority || '',
+                    item.notes || ''
                 ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
                 
                 csvContent += row + '\n';
@@ -1030,325 +834,7 @@
             document.body.removeChild(link);
         }
         
-        // Update statistics
-        function updateStats() {
-            document.getElementById('totalSites').textContent = allItems.length;
-            
-            let active = 0, pending = 0, completed = 0;
-            
-            allItems.forEach(item => {
-                if (item.Status === 'Active') active++;
-                if (item.MigrationPhase === 'Complete') completed++;
-                else if (item.MigrationPhase) pending++;
-            });
-            
-            document.getElementById('activeDevices').textContent = active;
-            document.getElementById('pendingMigration').textContent = pending;
-            document.getElementById('completed').textContent = completed;
-        }
-        
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadConfig();
-        });
-    </script>
-        
-        // Load saved configuration
-        function loadConfig() {
-            const saved = localStorage.getItem('sharepointConfig');
-            if (saved) {
-                CONFIG = JSON.parse(saved);
-                document.getElementById('siteUrl').value = CONFIG.siteUrl;
-                document.getElementById('listName').value = CONFIG.listName;
-                if (CONFIG.siteUrl && CONFIG.listName) {
-                    connectToSharePoint();
-                }
-            }
-        }
-        
-        // Save configuration
-        function saveConfig() {
-            CONFIG.siteUrl = document.getElementById('siteUrl').value.trim();
-            CONFIG.listName = document.getElementById('listName').value.trim();
-            
-            if (!CONFIG.siteUrl || !CONFIG.listName) {
-                alert('Please enter both Site URL and List Name');
-                return;
-            }
-            
-            // Remove trailing slash if present
-            if (CONFIG.siteUrl.endsWith('/')) {
-                CONFIG.siteUrl = CONFIG.siteUrl.slice(0, -1);
-            }
-            
-            localStorage.setItem('sharepointConfig', JSON.stringify(CONFIG));
-            connectToSharePoint();
-        }
-        
-        // Connect to SharePoint
-        async function connectToSharePoint() {
-            document.getElementById('syncStatus').textContent = '🔄 Connecting...';
-            document.getElementById('syncStatus').classList.add('syncing');
-            
-            try {
-                await loadSharePointData();
-                document.getElementById('configPanel').style.display = 'none';
-                document.getElementById('mainControls').style.display = 'flex';
-                document.getElementById('migrationTable').style.display = 'table';
-                document.getElementById('loadingMessage').style.display = 'none';
-                
-                // Start auto-refresh
-                if (refreshTimer) clearInterval(refreshTimer);
-                refreshTimer = setInterval(refreshData, CONFIG.refreshInterval);
-                
-                document.getElementById('syncStatus').textContent = '✅ Connected';
-                document.getElementById('syncStatus').classList.remove('syncing');
-            } catch (error) {
-                console.error('Connection error:', error);
-                document.getElementById('syncStatus').textContent = '❌ Connection Failed';
-                document.getElementById('syncStatus').classList.remove('syncing');
-                alert('Failed to connect to SharePoint. Please check your configuration and permissions.\n\nError: ' + error.message);
-            }
-        }
-        
-        // Load data from SharePoint List
-        async function loadSharePointData() {
-            const apiUrl = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items?$top=5000`;
-            
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json;odata=verbose',
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            allItems = data.d.results;
-            renderTable();
-            updateStats();
-        }
-        
-        // Render table with SharePoint data
-        function renderTable() {
-            const tbody = document.querySelector('#migrationTable tbody');
-            tbody.innerHTML = '';
-            
-            allItems.forEach(item => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', item.Id);
-                
-                // Create cells with data
-                const cells = [
-                    createEditableCell(item.SiteID || '', 'text', 'SiteID'),
-                    createEditableCell(item.SiteName || '', 'text', 'SiteName'),
-                    createSelectCell(item.SiteType || 'Cabinet', ['Data Center', 'Tower Site', 'Cabinet', 'Office'], 'SiteType'),
-                    createEditableCell(item.PhysicalAddress || '', 'text', 'PhysicalAddress'),
-                    createEditableCell(item.AccessInfo || '', 'text', 'AccessInfo'),
-                    createEditableCell(item.DeviceName || '', 'text', 'DeviceName'),
-                    createEditableCell(item.DeviceType || '', 'text', 'DeviceType'),
-                    createEditableCell(item.ManagementIP || '', 'text', 'ManagementIP'),
-                    createEditableCell(item.Username || '', 'text', 'Username'),
-                    createPasswordCell(item.Password || '', 'Password'),
-                    createSelectCell(item.Status || 'Active', ['Active', 'Shutdown', 'Inactive'], 'Status'),
-                    createEditableCell(item.CircuitID || '', 'text', 'CircuitID'),
-                    createEditableCell(item.ISPProvider || '', 'text', 'ISPProvider'),
-                    createEditableCell(item.Bandwidth || '', 'text', 'Bandwidth'),
-                    createEditableCell(item.CustomerCount || '', 'number', 'CustomerCount'),
-                    createSelectCell(item.MigrationPhase || 'Phase 1', ['Phase 1', 'Phase 2', 'Phase 3', 'Complete'], 'MigrationPhase'),
-                    createEditableCell(formatDate(item.MigrationDate), 'date', 'MigrationDate'),
-                    createSelectCell(item.Priority || 'Medium', ['High', 'Medium', 'Low'], 'Priority'),
-                    createEditableCell(item.Notes || '', 'text', 'Notes'),
-                    createActionCell(item.Id)
-                ];
-                
-                cells.forEach(cellHtml => {
-                    const cell = row.insertCell();
-                    cell.innerHTML = cellHtml;
-                });
-                
-                // Apply status colors
-                const statusSelect = row.cells[10].querySelector('select');
-                if (statusSelect) updateStatusColor(statusSelect);
-            });
-        }
-        
-        // Helper functions to create cells
-        function createEditableCell(value, type, field) {
-            return `<input type="${type}" class="editable" value="${value}" data-field="${field}" onchange="updateItem(this)">`;
-        }
-        
-        function createSelectCell(value, options, field) {
-            const optionsHtml = options.map(opt => 
-                `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`
-            ).join('');
-            const onchange = field === 'Status' ? 'onchange="updateStatusColor(this); updateItem(this)"' : 'onchange="updateItem(this)"';
-            return `<select class="editable" data-field="${field}" ${onchange}>${optionsHtml}</select>`;
-        }
-        
-        function createPasswordCell(value, field) {
-            const id = 'pwd-' + Math.random().toString(36).substr(2, 9);
-            return `<div class="password-container">
-                <input type="password" class="editable password-input" value="${value}" data-field="${field}" id="${id}" onchange="updateItem(this)">
-                <button class="password-toggle" onclick="togglePassword('${id}')">👁️</button>
-            </div>`;
-        }
-        
-        function createActionCell(itemId) {
-            return `<button class="btn btn-danger" onclick="deleteItem(${itemId})">❌</button>`;
-        }
-        
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toISOString().split('T')[0];
-        }
-        
-        // Update item in SharePoint
-        async function updateItem(element) {
-            const row = element.closest('tr');
-            const itemId = row.getAttribute('data-id');
-            const field = element.getAttribute('data-field');
-            let value = element.value;
-            
-            // Handle date field
-            if (element.type === 'date' && value) {
-                value = new Date(value).toISOString();
-            }
-            
-            // Handle number field
-            if (field === 'CustomerCount' && value) {
-                value = parseInt(value) || 0;
-            }
-            
-            const updateData = {
-                __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` }
-            };
-            updateData[field] = value;
-            
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items(${itemId})`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose',
-                        'X-HTTP-Method': 'MERGE',
-                        'IF-MATCH': '*',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    body: JSON.stringify(updateData),
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok && response.status !== 204) {
-                    throw new Error('Update failed');
-                }
-                
-                showSaveIndicator();
-            } catch (error) {
-                console.error('Update error:', error);
-                alert('Failed to save changes. Please refresh and try again.');
-            }
-        }
-        
-        // Add new item to SharePoint
-        async function addRow() {
-            const newItem = {
-                __metadata: { type: `SP.Data.${CONFIG.listName.replace(/[^a-zA-Z0-9]/g, '_x0020_')}ListItem` },
-                SiteID: 'NEW-SITE',
-                SiteName: 'New Site',
-                SiteType: 'Cabinet',
-                Status: 'Active',
-                MigrationPhase: 'Phase 1',
-                Priority: 'Medium'
-            };
-            
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'Content-Type': 'application/json;odata=verbose',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    body: JSON.stringify(newItem),
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to add item');
-                }
-                
-                await refreshData();
-            } catch (error) {
-                console.error('Add error:', error);
-                alert('Failed to add new site. Please check your permissions.');
-            }
-        }
-        
-        // Delete item from SharePoint
-        async function deleteItem(itemId) {
-            if (!confirm('Are you sure you want to delete this site?')) return;
-            
-            try {
-                const response = await fetch(`${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items(${itemId})`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json;odata=verbose',
-                        'X-HTTP-Method': 'DELETE',
-                        'IF-MATCH': '*',
-                        'X-RequestDigest': await getRequestDigest()
-                    },
-                    credentials: 'same-origin'
-                });
-                
-                if (!response.ok && response.status !== 204) {
-                    throw new Error('Delete failed');
-                }
-                
-                await refreshData();
-            } catch (error) {
-                console.error('Delete error:', error);
-                alert('Failed to delete item. Please check your permissions.');
-            }
-        }
-        
-        // Get Request Digest for SharePoint REST API
-        async function getRequestDigest() {
-            const response = await fetch(`${CONFIG.siteUrl}/_api/contextinfo`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json;odata=verbose',
-                    'Content-Type': 'application/json;odata=verbose'
-                },
-                credentials: 'same-origin'
-            });
-            
-            const data = await response.json();
-            return data.d.GetContextWebInformation.FormDigestValue;
-        }
-        
-        // Refresh data
-        async function refreshData() {
-            document.getElementById('syncStatus').textContent = '🔄 Refreshing...';
-            document.getElementById('syncStatus').classList.add('syncing');
-            
-            try {
-                await loadSharePointData();
-                document.getElementById('syncStatus').textContent = '✅ Connected';
-            } catch (error) {
-                document.getElementById('syncStatus').textContent = '⚠️ Refresh Failed';
-            } finally {
-                document.getElementById('syncStatus').classList.remove('syncing');
-            }
-        }
-        
-        // Toggle password visibility
+        // Helper functions
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const button = input.nextElementSibling;
@@ -1362,7 +848,6 @@
             }
         }
         
-        // Update status color
         function updateStatusColor(select) {
             switch(select.value) {
                 case 'Active':
@@ -1380,96 +865,32 @@
             }
         }
         
-        // Show save indicator
-        function showSaveIndicator() {
-            let indicator = document.getElementById('saveIndicator');
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = 'saveIndicator';
-                indicator.style.cssText = 'position: fixed; top: 70px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999; transition: opacity 0.3s;';
-                document.body.appendChild(indicator);
+        function updatePriorityColor(select) {
+            switch(select.value) {
+                case 'High':
+                    select.style.background = '#fce7f3';
+                    select.style.color = '#be185d';
+                    break;
+                case 'Medium':
+                    select.style.background = '#fef3c7';
+                    select.style.color = '#d97706';
+                    break;
+                case 'Low':
+                    select.style.background = '#dbeafe';
+                    select.style.color = '#1e40af';
+                    break;
             }
-            
-            indicator.textContent = '✓ Saved to SharePoint';
-            indicator.style.opacity = '1';
-            
-            setTimeout(() => {
-                indicator.style.opacity = '0';
-            }, 2000);
         }
         
-        // Filter table
-        function filterTable(searchTerm) {
-            const rows = document.querySelectorAll('#migrationTable tbody tr');
-            searchTerm = searchTerm.toLowerCase();
-            
-            rows.forEach(row => {
-                let visible = false;
-                const cells = row.querySelectorAll('td');
-                
-                cells.forEach(cell => {
-                    const input = cell.querySelector('input, select');
-                    const text = input ? input.value.toLowerCase() : cell.textContent.toLowerCase();
-                    
-                    if (text.includes(searchTerm)) {
-                        visible = true;
-                    }
-                });
-                
-                row.style.display = visible ? '' : 'none';
-            });
-        }
-        
-        // Export to Excel
-        function exportToExcel() {
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Site ID,Site Name,Site Type,Physical Address,Access Info,Device Name,Device Type,Management IP,Username,Password,Status,Circuit ID,ISP Provider,Bandwidth,Customer Count,Migration Phase,Migration Date,Priority,Notes\n";
-            
-            allItems.forEach(item => {
-                const row = [
-                    item.SiteID || '',
-                    item.SiteName || '',
-                    item.SiteType || '',
-                    item.PhysicalAddress || '',
-                    item.AccessInfo || '',
-                    item.DeviceName || '',
-                    item.DeviceType || '',
-                    item.ManagementIP || '',
-                    item.Username || '',
-                    item.Password || '',
-                    item.Status || '',
-                    item.CircuitID || '',
-                    item.ISPProvider || '',
-                    item.Bandwidth || '',
-                    item.CustomerCount || '',
-                    item.MigrationPhase || '',
-                    item.MigrationDate ? new Date(item.MigrationDate).toLocaleDateString() : '',
-                    item.Priority || '',
-                    item.Notes || ''
-                ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
-                
-                csvContent += row + '\n';
-            });
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'beamspeed_migration_' + new Date().toISOString().slice(0,10) + '.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        // Update statistics
         function updateStats() {
-            document.getElementById('totalSites').textContent = allItems.length;
+            document.getElementById('totalSites').textContent = allData.length;
             
             let active = 0, pending = 0, completed = 0;
             
-            allItems.forEach(item => {
-                if (item.Status === 'Active') active++;
-                if (item.MigrationPhase === 'Complete') completed++;
-                else if (item.MigrationPhase) pending++;
+            allData.forEach(item => {
+                if (item.status === 'Active') active++;
+                if (item.migrationphase === 'Complete') completed++;
+                else if (item.migrationphase) pending++;
             });
             
             document.getElementById('activeDevices').textContent = active;
@@ -1477,9 +898,46 @@
             document.getElementById('completed').textContent = completed;
         }
         
-        // Initialize on load
+        function showSaveIndicator() {
+            const indicator = document.createElement('div');
+            indicator.textContent = '✓ Saved to Database';
+            indicator.style.cssText = 'position: fixed; top: 70px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+        }
+        
+        function showUndoIndicator() {
+            const indicator = document.createElement('div');
+            indicator.textContent = '↩️ Change undone';
+            indicator.style.cssText = 'position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+        }
+        
+        // Set up real-time subscription
+        supabaseClient
+            .channel('migration_tracker_changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'migration_tracker' }, 
+                (payload) => {
+                    console.log('Database change detected:', payload);
+                    loadData();
+                }
+            )
+            .subscribe();
+        
+        // Auto-refresh every 30 seconds as backup
+        setInterval(loadData, 30000);
+        
+        // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadConfig();
+            loadData();
         });
     </script>
 </body>
