@@ -19,6 +19,92 @@
             min-height: 100vh;
         }
         
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .login-logo {
+            font-size: 3em;
+            font-weight: bold;
+            color: #2563eb;
+            opacity: 0.2;
+            margin-bottom: 20px;
+        }
+        
+        .login-title {
+            font-size: 1.8em;
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        
+        .login-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .login-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .login-button {
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .login-error {
+            color: #ef4444;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
         .container {
             background: white;
             border-radius: 12px;
@@ -372,7 +458,23 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <div class="login-logo">resound</div>
+            <h2 class="login-title">BeamSpeed Migration Tracker</h2>
+            <p class="login-subtitle">Please enter your credentials to access the tracker</p>
+            
+            <input type="text" id="loginUsername" class="login-input" placeholder="Username" autofocus>
+            <input type="password" id="loginPassword" class="login-input" placeholder="Password" onkeypress="if(event.key==='Enter') attemptLogin()">
+            <button class="login-button" onclick="attemptLogin()">Login</button>
+            
+            <div id="loginError" class="login-error hidden"></div>
+        </div>
+    </div>
+    
+    <!-- Main Application (hidden until login) -->
+    <div class="container hidden" id="mainContainer">
         <div class="header">
             <div class="sync-status" id="syncStatus">✅ Connected to Supabase</div>
             <div class="logo">resound</div>
@@ -388,6 +490,7 @@
             <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
             <button class="btn btn-primary" onclick="sortTable('sitename')">🏢 Sort by Site Name</button>
             <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
+            <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
             <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
         </div>
         
@@ -453,6 +556,53 @@
     </div>
     
     <script>
+        // Authentication Configuration
+        const AUTH_CONFIG = {
+            username: 'beamspeed',
+            password: 'Resound2026'  // Change these credentials!
+        };
+        
+        // Check authentication
+        function checkAuth() {
+            const isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+            if (isAuthenticated) {
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('mainContainer').classList.remove('hidden');
+                loadData(); // Start loading data
+            }
+        }
+        
+        // Attempt login
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+            
+            if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
+                // Successful login
+                sessionStorage.setItem('authenticated', 'true');
+                document.getElementById('loginContainer').classList.add('hidden');
+                document.getElementById('mainContainer').classList.remove('hidden');
+                loadData(); // Start loading data
+            } else {
+                // Failed login
+                errorDiv.textContent = 'Invalid username or password';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginPassword').value = '';
+                
+                // Hide error after 3 seconds
+                setTimeout(() => {
+                    errorDiv.classList.add('hidden');
+                }, 3000);
+            }
+        }
+        
+        // Add logout functionality
+        function logout() {
+            sessionStorage.removeItem('authenticated');
+            location.reload();
+        }
+        
         // Initialize Supabase
         const supabaseUrl = 'https://lutaijsslnpgvnbwbatt.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGFpanNzbG5wZ3ZuYndiYXR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg4NTY0MzksImV4cCI6MjA3NDQzMjQzOX0.L1CtWNA1XTsIHETX4ITft9UusGmPZ2BQwPUSoHYZgqc';
@@ -937,7 +1087,7 @@
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadData();
+            checkAuth(); // Check if user is authenticated first
         });
     </script>
 </body>
