@@ -1495,7 +1495,7 @@ const siteCell = row.insertCell();
 siteCell.colSpan = 2; // Takes up both Site ID and Site Name columns
 siteCell.innerHTML = `
     <select class="editable" style="width: 100%; min-width: 200px;" onchange="updateSiteAssignment(this, ${item.id})">
-        <option value="${item.siteid}|${item.sitename}" selected>${item.siteid} - ${item.sitename}</option>
+        <option value="${item.siteid}|${item.sitename}" selected>${item.sitename.includes(item.siteid) ? item.sitename : item.siteid + ' - ' + item.sitename}</option>
     </select>`;
 
 // Populate the dropdown with all unique sites
@@ -1510,7 +1510,7 @@ Object.entries(uniqueSites).forEach(([id, name]) => {
     if (id !== item.siteid) {
         const option = document.createElement('option');
         option.value = `${id}|${name}`;
-        option.textContent = `${id} - ${name}`;
+        option.textContent = name.includes(id) ? name : `${id} - ${name}`;
         siteSelect.appendChild(option);
     }
 });
