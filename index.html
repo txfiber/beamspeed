@@ -1217,16 +1217,30 @@
             </div>
         </div>
     </div>
-    <div class="modal-overlay" id="siteModal">
+    <!-- Modal for Add Site -->
+<div class="modal-overlay" id="siteModal">
     <div class="modal">
         <h3>Create New Site</h3>
-        <p style="margin-bottom: 20px; color: #6b7280;">Enter the details for the new site:</p>
+        <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location details:</p>
         
-        <label>Site ID (Short Code):</label>
-        <input type="text" id="newSiteId" class="modal-input" placeholder="e.g., PHX-01, DAL-02" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+        <div style="margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="radio" name="cityOption" value="new" checked onclick="toggleCityInput()">
+                <span style="margin-left: 8px;">New City/Region</span>
+            </label>
+            <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
+            
+            <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="radio" name="cityOption" value="existing" onclick="toggleCityInput()">
+                <span style="margin-left: 8px;">Existing City/Region</span>
+            </label>
+            <select id="existingCity" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; display: none;" disabled>
+                <option value="">Select a city...</option>
+            </select>
+        </div>
         
-        <label>Site Name:</label>
-        <input type="text" id="newSiteName" class="modal-input" placeholder="e.g., Phoenix Tower, Dallas Hub" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+        <label>Location ID:</label>
+        <input type="text" id="locationId" placeholder="e.g., TWR01, DC01, CAB03" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
         
         <label>Site Type:</label>
         <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
@@ -1237,7 +1251,7 @@
         </select>
         
         <div class="info-box">
-            💡 You'll be able to add devices to this site after creation.
+            💡 This will create site: <strong id="sitePreview">CITY-LOCATION</strong>
         </div>
         
         <div class="modal-actions">
@@ -1670,35 +1684,112 @@ Object.entries(uniqueSites).forEach(([id, name]) => {
         }
         
         // Add new row (site with first device)
-// Show site creation modal (replaces the old addRow)
+// Show site creation modal
 function addRow() {
     document.getElementById('siteModal').style.display = 'flex';
-    document.getElementById('newSiteId').focus();
+    populateCityDropdown();
+    document.getElementById('newCity').focus();
 }
 
 // Close site modal
 function closeSiteModal() {
     document.getElementById('siteModal').style.display = 'none';
-    document.getElementById('newSiteId').value = '';
-    document.getElementById('newSiteName').value = '';
+    document.getElementById('newCity').value = '';
+    document.getElementById('locationId').value = '';
+    document.getElementById('existingCity').value = '';
+    document.getElementById('sitePreview').textContent = 'CITY-LOCATION';
+    document.querySelector('input[name="cityOption"][value="new"]').checked = true;
+    toggleCityInput();
 }
+// Toggle between new and existing city input
+function toggleCityInput() {
+    const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+    const newCityInput = document.getElementById('newCity');
+    const existingCitySelect = document.getElementById('existingCity');
+    
+    if (cityOption === 'new') {
+        newCityInput.style.display = 'block';
+        newCityInput.disabled = false;
+        existingCitySelect.style.display = 'none';
+        existingCitySelect.disabled = true;
+    } else {
+        newCityInput.style.display = 'none';
+        newCityInput.disabled = true;
+        existingCitySelect.style.display = 'block';
+        existingCitySelect.disabled = false;
+    }
+    updateSitePreview();
+}
+
+// Update the site preview
+function updateSitePreview() {
+    const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+    const city = cityOption === 'new' 
+        ? document.getElementById('newCity').value.toUpperCase() 
+        : document.getElementById('existingCity').value;
+    const location = document.getElementById('locationId').value.toUpperCase();
+    
+    const preview = (city && location) ? `${city}-${location}` : 'CITY-LOCATION';
+    document.getElementById('sitePreview').textContent = preview;
+}
+
+// Populate city dropdown with existing cities
+function populateCityDropdown() {
+    const citySelect = document.getElementById('existingCity');
+    citySelect.innerHTML = '<option value="">Select a city...</option>';
+    
+    // Extract unique cities from existing data
+    const cities = new Set();
+    allData.forEach(item => {
+        if (item.siteid && item.siteid.includes('-')) {
+            const city = item.siteid.split('-')[0];
+            cities.add(city);
+        }
+    });
+    
+    // Add cities to dropdown
+    Array.from(cities).sort().forEach(city => {
+        const option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+    });
+}
+
+// Add event listeners for preview updates
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = ['newCity', 'existingCity', 'locationId'];
+    inputs.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', updateSitePreview);
+            element.addEventListener('change', updateSitePreview);
+        }
+    });
+});        
 // Show site creation modal (replaces the old addRow)
 
 // Create new site with first device
 async function createNewSite() {
-    const siteId = document.getElementById('newSiteId').value.trim().toUpperCase();
-    const siteName = document.getElementById('newSiteName').value.trim();
+    const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+    const city = cityOption === 'new' 
+        ? document.getElementById('newCity').value.trim().toUpperCase()
+        : document.getElementById('existingCity').value;
+    const locationId = document.getElementById('locationId').value.trim().toUpperCase();
     const siteType = document.getElementById('newSiteType').value;
     
     // Validation
-    if (!siteId || !siteName) {
-        alert('Please enter both Site ID and Site Name');
+    if (!city || !locationId) {
+        alert('Please enter both City and Location ID');
         return;
     }
     
+    const siteId = `${city}-${locationId}`;
+    const siteName = siteId; // Using same for both
+    
     // Check if site ID already exists
     if (allData.some(item => item.siteid === siteId)) {
-        alert('This Site ID already exists. Please use a unique ID.');
+        alert('This Site ID already exists. Please use a unique Location ID.');
         return;
     }
     
