@@ -521,61 +521,6 @@
             font-weight: bold;
         }
         
-        /* Collapsible Table Styles */
-        .city-row {
-            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            user-select: none;
-        }
-        
-        .city-row:hover {
-            background: linear-gradient(90deg, #7c7ff3 0%, #9d70f8 100%);
-        }
-        
-        .city-row td {
-            padding: 15px 12px;
-            border-bottom: 2px solid #dee2e6;
-        }
-        
-        .expand-icon {
-            display: inline-block;
-            width: 20px;
-            transition: transform 0.3s ease;
-        }
-        
-        .expand-icon.collapsed {
-            transform: rotate(-90deg);
-        }
-        
-        .location-row {
-            background: #f0f4f8;
-            font-weight: 600;
-        }
-        
-        .location-row.hidden {
-            display: none;
-        }
-        
-        .device-row {
-            background: white;
-        }
-        
-        .device-row.hidden {
-            display: none;
-        }
-        
-        .device-row td:first-child {
-            padding-left: 60px;
-        }
-        
-        .location-stats {
-            color: #6b7280;
-            font-size: 0.9em;
-            font-weight: normal;
-            margin-left: 10px;
-        }
         /* Table View Styles */
         .container {
             background: white;
@@ -1180,7 +1125,7 @@
             </div>
             <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
             <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
-            <button class="btn btn-primary" onclick="sortTable('siteid')">🏢 Sort by Site</button>
+            <button class="btn btn-primary" onclick="sortTable('sitename')">🏢 Sort by Site Name</button>
             <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
             <button class="btn btn-dashboard" onclick="switchToDashboard()">📈 Dashboard</button>
             <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
@@ -1217,14 +1162,15 @@
             <table id="migrationTable" style="display: none;">
                 <thead>
                     <tr>
-                        <th colspan="4" class="category-header">SITE INFORMATION</th>
+                        <th colspan="5" class="category-header">SITE INFORMATION</th>
                         <th colspan="6" class="category-header">NETWORK DETAILS</th>
                         <th colspan="4" class="category-header">CONNECTIVITY</th>
                         <th colspan="4" class="category-header">MIGRATION</th>
                         <th colspan="1" class="category-header">ACTIONS</th>
                     </tr>
                     <tr>
-                        <th colspan="2" onclick="sortTable('siteid')">Site Assignment</th>
+                        <th onclick="sortTable('siteid')">Site ID</th>
+                        <th onclick="sortTable('sitename')">Site Name</th>
                         <th onclick="sortTable('sitetype')">Site Type</th>
                         <th onclick="sortTable('physicaladdress')">Physical Address</th>
                         <th onclick="sortTable('accessinfo')">Access Info</th>
@@ -1272,50 +1218,7 @@
             </div>
         </div>
     </div>
-    <!-- Modal for Add Site -->
-<div class="modal-overlay" id="siteModal">
-    <div class="modal">
-        <h3>Create New Site</h3>
-        <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location details:</p>
-        
-        <div style="margin-bottom: 20px;">
-            <label style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="radio" name="cityOption" value="new" checked onclick="toggleCityInput()">
-                <span style="margin-left: 8px;">New City/Region</span>
-            </label>
-            <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
-            
-            <label style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="radio" name="cityOption" value="existing" onclick="toggleCityInput()">
-                <span style="margin-left: 8px;">Existing City/Region</span>
-            </label>
-            <select id="existingCity" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; display: none;" disabled>
-                <option value="">Select a city...</option>
-            </select>
-        </div>
-        
-        <label>Location ID:</label>
-        <input type="text" id="locationId" placeholder="e.g., TWR01, DC01, CAB03" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
-        
-        <label>Site Type:</label>
-        <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
-            <option value="Data Center">Data Center</option>
-            <option value="Tower Site">Tower Site</option>
-            <option value="Cabinet">Cabinet</option>
-            <option value="Office">Office</option>
-        </select>
-        
-        <div class="info-box">
-            💡 This will create site: <strong id="sitePreview">CITY-LOCATION</strong>
-        </div>
-        
-        <div class="modal-actions">
-            <button class="btn" style="background: #e5e7eb;" onclick="closeSiteModal()">Cancel</button>
-            <button class="btn btn-success" onclick="createNewSite()">Create Site</button>
-        </div>
-    </div>
-</div>
-
+    
     <script>
         // Authentication Configuration
         const AUTH_CONFIG = {
@@ -1535,168 +1438,129 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
-            if (allData.length === 0) {
-                document.getElementById('loadingMessage').style.display = 'block';
-                document.getElementById('loadingMessage').textContent = 'No data available';
-                document.getElementById('migrationTable').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('loadingMessage').style.display = 'none';
             document.getElementById('migrationTable').style.display = 'table';
+            document.getElementById('loadingMessage').style.display = 'none';
             
-            // Group data by city and location
-            const groupedData = {};
-            allData.forEach(item => {
-                const parts = (item.siteid || '').split('-');
-                const city = parts[0] || 'UNASSIGNED';
-                const location = parts[1] || 'UNKNOWN';
-                
-                if (!groupedData[city]) {
-                    groupedData[city] = {};
+            // Sort data by siteid to group devices together
+            const sortedData = [...allData].sort((a, b) => {
+                if (a.siteid === b.siteid) {
+                    return (a.devicename || '').localeCompare(b.devicename || '');
                 }
-                if (!groupedData[city][location]) {
-                    groupedData[city][location] = [];
-                }
-                groupedData[city][location].push(item);
+                return (a.siteid || '').localeCompare(b.siteid || '');
             });
             
-            // Render grouped data
-            Object.entries(groupedData).forEach(([city, locations]) => {
-                // City header row
-                const cityRow = document.createElement('tr');
-                cityRow.className = 'city-row';
-                cityRow.setAttribute('data-city', city);
-                cityRow.onclick = () => toggleCity(city);
+            let lastSiteId = null;
+            
+            sortedData.forEach(item => {
+                const row = tbody.insertRow();
+                row.setAttribute('data-id', item.id);
                 
-                const deviceCount = Object.values(locations).reduce((sum, devices) => sum + devices.length, 0);
-                cityRow.innerHTML = `
-                    <td colspan="20">
-                        <span class="expand-icon">▼</span> ${city}
-                        <span class="location-stats">(${Object.keys(locations).length} locations, ${deviceCount} devices)</span>
-                    </td>
-                `;
-                tbody.appendChild(cityRow);
+                // Add visual grouping for devices at same site
+                if (lastSiteId === item.siteid && lastSiteId !== null) {
+                    row.classList.add('site-group');
+                }
+                lastSiteId = item.siteid;
                 
-                // Location rows
-                Object.entries(locations).forEach(([location, devices]) => {
-                    // Location header row
-                    const locationRow = document.createElement('tr');
-                    locationRow.className = 'location-row';
-                    locationRow.setAttribute('data-city', city);
-                    locationRow.innerHTML = `
-                        <td colspan="20" style="padding-left: 30px;">
-                            📍 ${location}
-                            <span class="location-stats">(${devices.length} device${devices.length > 1 ? 's' : ''})</span>
-                        </td>
-                    `;
-                    tbody.appendChild(locationRow);
-                    
-                    // Device rows
-                    devices.forEach((item, index) => {
-                        const row = document.createElement('tr');
-                        row.className = 'device-row';
-                        row.setAttribute('data-city', city);
-                        row.setAttribute('data-id', item.id);
-                        
-                        const passwordInputId = `password-${passwordIdCounter++}`;
-                        
-                        row.innerHTML = `
-                            <td colspan="2">
-                                <input class="editable" data-field="siteid" value="${item.siteid || ''}" 
-                                    onblur="updateField(this, ${item.id}, 'siteid')" placeholder="CITY-LOCATION">
-                                <input class="editable" data-field="sitename" value="${item.sitename || ''}" 
-                                    onblur="updateField(this, ${item.id}, 'sitename')" placeholder="Site Name">
-                            </td>
-                            <td>
-                                <select class="editable" data-field="sitetype" onchange="updateField(this, ${item.id}, 'sitetype')">
-                                    <option value="" ${!item.sitetype ? 'selected' : ''}>Select Type</option>
-                                    <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
-                                    <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
-                                    <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
-                                    <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" data-field="physicaladdress" value="${item.physicaladdress || ''}" onblur="updateField(this, ${item.id}, 'physicaladdress')"></td>
-                            <td><input class="editable" data-field="accessinfo" value="${item.accessinfo || ''}" onblur="updateField(this, ${item.id}, 'accessinfo')"></td>
-                            <td><input class="editable" data-field="devicename" value="${item.devicename || ''}" onblur="updateField(this, ${item.id}, 'devicename')"></td>
-                            <td>
-                                <select class="editable" data-field="devicetype" onchange="updateField(this, ${item.id}, 'devicetype')">
-                                    <option value="" ${!item.devicetype ? 'selected' : ''}>Select Type</option>
-                                    <option value="Router" ${item.devicetype === 'Router' ? 'selected' : ''}>Router</option>
-                                    <option value="Switch" ${item.devicetype === 'Switch' ? 'selected' : ''}>Switch</option>
-                                    <option value="Firewall" ${item.devicetype === 'Firewall' ? 'selected' : ''}>Firewall</option>
-                                    <option value="Access Point" ${item.devicetype === 'Access Point' ? 'selected' : ''}>Access Point</option>
-                                    <option value="Server" ${item.devicetype === 'Server' ? 'selected' : ''}>Server</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" data-field="managementip" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
-                            <td><input class="editable" data-field="username" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
-                            <td>
-                                <div class="password-container">
-                                    <input type="password" id="${passwordInputId}" class="editable password-input" data-field="password" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')">
-                                    <button class="password-toggle" onclick="togglePassword('${passwordInputId}')">👁️</button>
-                                </div>
-                            </td>
-                            <td>
-                                <select class="editable" data-field="status" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
-                                    <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                                    <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                                    <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" data-field="circuitid" value="${item.circuitid || ''}" onblur="updateField(this, ${item.id}, 'circuitid')"></td>
-                            <td><input class="editable" data-field="ispprovider" value="${item.ispprovider || ''}" onblur="updateField(this, ${item.id}, 'ispprovider')"></td>
-                            <td><input class="editable" data-field="bandwidth" value="${item.bandwidth || ''}" onblur="updateField(this, ${item.id}, 'bandwidth')"></td>
-                            <td><input class="editable" type="number" data-field="customercount" value="${item.customercount || 0}" onblur="updateField(this, ${item.id}, 'customercount')"></td>
-                            <td>
-                                <select class="editable" data-field="migrationphase" onchange="updateField(this, ${item.id}, 'migrationphase')">
-                                    <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
-                                    <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
-                                    <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
-                                    <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" type="date" data-field="migrationdate" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
-                            <td>
-                                <select class="editable" data-field="priority" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
-                                    <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
-                                    <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                                    <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" data-field="notes" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
-                            <td class="actions-column">
-                                <button class="btn btn-danger" onclick="deleteRow(${item.id})">🗑️</button>
-                            </td>
-                        `;
-                        
-                        tbody.appendChild(row);
-                    });
-                });
+                // Site Information
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.siteid || ''}" data-field="siteid" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.sitename || ''}" data-field="sitename" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `
+                    <select class="editable" data-field="sitetype" onchange="updateCell(this, ${item.id})">
+                        <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
+                        <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
+                        <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
+                        <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
+                    </select>`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.physicaladdress || ''}" data-field="physicaladdress" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.accessinfo || ''}" data-field="accessinfo" onchange="updateCell(this, ${item.id})">`;
+                
+                // Network Details
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicename || ''}" data-field="devicename" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicetype || ''}" data-field="devicetype" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.managementip || ''}" data-field="managementip" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.username || ''}" data-field="username" onchange="updateCell(this, ${item.id})">`;
+                
+                // Password field with toggle
+                const pwdId = 'pwd-' + passwordIdCounter++;
+                row.insertCell().innerHTML = `
+                    <div class="password-container">
+                        <input type="password" class="editable password-input" value="${item.password || ''}" data-field="password" id="${pwdId}" onchange="updateCell(this, ${item.id})">
+                        <button class="password-toggle" onclick="togglePassword('${pwdId}')">👁️</button>
+                    </div>`;
+                
+                // Status with color
+                const statusCell = row.insertCell();
+                statusCell.innerHTML = `
+                    <select class="editable" data-field="status" onchange="updateCell(this, ${item.id}); updateStatusColor(this)">
+                        <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+                        <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
+                        <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                    </select>`;
+                updateStatusColor(statusCell.querySelector('select'));
+                
+                // Connectivity
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.circuitid || ''}" data-field="circuitid" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.ispprovider || ''}" data-field="ispprovider" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.bandwidth || ''}" data-field="bandwidth" onchange="updateCell(this, ${item.id})">`;
+                row.insertCell().innerHTML = `<input type="number" class="editable" value="${item.customercount || ''}" data-field="customercount" onchange="updateCell(this, ${item.id})">`;
+                
+                // Migration
+                row.insertCell().innerHTML = `
+                    <select class="editable" data-field="migrationphase" onchange="updateCell(this, ${item.id})">
+                        <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
+                        <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
+                        <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
+                        <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
+                    </select>`;
+                
+                const dateValue = item.migrationdate ? item.migrationdate.split('T')[0] : '';
+                row.insertCell().innerHTML = `<input type="date" class="editable" value="${dateValue}" data-field="migrationdate" onchange="updateCell(this, ${item.id})">`;
+                
+                const priorityCell = row.insertCell();
+                priorityCell.innerHTML = `
+                    <select class="editable" data-field="priority" onchange="updateCell(this, ${item.id}); updatePriorityColor(this)">
+                        <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
+                        <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                        <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
+                    </select>`;
+                updatePriorityColor(priorityCell.querySelector('select'));
+                
+                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.notes || ''}" data-field="notes" onchange="updateCell(this, ${item.id})">`;
+                
+                // Action
+                row.insertCell().innerHTML = `<button class="btn btn-danger" onclick="deleteRow(${item.id})">❌</button>`;
             });
         }
         
-        // Update field in database
-        async function updateField(element, id, field) {
-            const oldValue = allData.find(item => item.id === id)?.[field];
-            const newValue = element.type === 'number' ? Number(element.value) : element.value;
+        // Update cell in Supabase
+        async function updateCell(element, id) {
+            const field = element.getAttribute('data-field');
+            let value = element.value;
             
-            if (oldValue === newValue) return;
+            // Find the old value for undo
+            const oldItem = allData.find(item => item.id === id);
+            const oldValue = oldItem ? oldItem[field] : '';
+            
+            // Add to undo history
+            addToUndoHistory('update', id, field, oldValue, value);
+            
+            // Handle number fields
+            if (field === 'customercount') {
+                value = parseInt(value) || 0;
+            }
             
             try {
                 const { error } = await supabaseClient
                     .from('migration_tracker')
-                    .update({ [field]: newValue })
+                    .update({ [field]: value })
                     .eq('id', id);
                 
                 if (error) throw error;
                 
-                addToUndoHistory('update', id, field, oldValue, newValue);
-                
+                // Update local data
                 const index = allData.findIndex(item => item.id === id);
                 if (index !== -1) {
-                    allData[index][field] = newValue;
+                    allData[index][field] = value;
                 }
                 
                 showSaveIndicator();
@@ -1704,3 +1568,543 @@
                 updateDashboard();
                 
             } catch (error) {
+                console.error('Update error:', error);
+                alert('Failed to save changes. Please try again.');
+                element.value = oldValue;
+            }
+        }
+        
+        // Add new row (site with first device)
+        async function addRow() {
+            const newRow = {
+                siteid: 'NEW-SITE',
+                sitename: 'New Site',
+                sitetype: 'Cabinet',
+                physicaladdress: '',
+                accessinfo: '',
+                devicename: 'NEW-DEVICE',
+                devicetype: '',
+                managementip: '',
+                username: '',
+                password: '',
+                status: 'Active',
+                circuitid: '',
+                ispprovider: '',
+                bandwidth: '',
+                customercount: 0,
+                migrationphase: 'Phase 1',
+                migrationdate: null,
+                priority: 'Medium',
+                notes: ''
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert([newRow])
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    allData.push(data[0]);
+                    renderTable();
+                    updateStats();
+                    updateDashboard();
+                    populateSiteDropdown();
+                    
+                    // Scroll to new row
+                    const rows = document.querySelectorAll('#tableBody tr');
+                    if (rows.length > 0) {
+                        rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    
+                    addToUndoHistory('add', data[0].id, null, null, data[0]);
+                }
+                
+            } catch (error) {
+                console.error('Add error:', error);
+                alert('Failed to add new site. Please try again.');
+            }
+        }
+        
+        // Delete row
+        async function deleteRow(id) {
+            if (confirm('Are you sure you want to delete this site?')) {
+                const deletedItem = allData.find(item => item.id === id);
+                
+                try {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    addToUndoHistory('delete', id, null, deletedItem, null);
+                    
+                    allData = allData.filter(item => item.id !== id);
+                    renderTable();
+                    updateStats();
+                    updateDashboard();
+                    populateSiteDropdown();
+                    
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Failed to delete site. Please try again.');
+                }
+            }
+        }
+        
+        // Undo functionality
+        function addToUndoHistory(action, id, field, oldValue, newValue) {
+            undoHistory.unshift({
+                action: action,
+                id: id,
+                field: field,
+                oldValue: oldValue,
+                newValue: newValue
+            });
+            
+            if (undoHistory.length > MAX_UNDO_HISTORY) {
+                undoHistory = undoHistory.slice(0, MAX_UNDO_HISTORY);
+            }
+        }
+        
+        async function undoLastChange() {
+            if (undoHistory.length === 0) {
+                alert('No changes to undo');
+                return;
+            }
+            
+            const lastChange = undoHistory.shift();
+            
+            try {
+                if (lastChange.action === 'update') {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .update({ [lastChange.field]: lastChange.oldValue })
+                        .eq('id', lastChange.id);
+                    
+                    if (error) throw error;
+                    
+                } else if (lastChange.action === 'delete') {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .insert([lastChange.oldValue]);
+                    
+                    if (error) throw error;
+                    
+                } else if (lastChange.action === 'add') {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .eq('id', lastChange.id);
+                    
+                    if (error) throw error;
+                }
+                
+                await loadData();
+                showUndoIndicator();
+                
+            } catch (error) {
+                console.error('Undo error:', error);
+                alert('Failed to undo change. Please refresh and try again.');
+                undoHistory.unshift(lastChange);
+            }
+        }
+        
+        // Sort table
+        async function sortTable(column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .select('*')
+                    .order(column, { ascending: sortDirection === 'asc' });
+                
+                if (error) throw error;
+                
+                allData = data || [];
+                renderTable();
+                
+            } catch (error) {
+                console.error('Sort error:', error);
+            }
+        }
+        
+        // Filter table
+        function filterTable(searchTerm) {
+            const rows = document.querySelectorAll('#tableBody tr');
+            searchTerm = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                let visible = false;
+                const cells = row.querySelectorAll('td');
+                
+                cells.forEach(cell => {
+                    const input = cell.querySelector('input, select');
+                    const text = input ? input.value.toLowerCase() : cell.textContent.toLowerCase();
+                    
+                    if (text.includes(searchTerm)) {
+                        visible = true;
+                    }
+                });
+                
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+        
+        // Export to Excel
+        function exportToExcel() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Site ID,Site Name,Site Type,Physical Address,Access Info,Device Name,Device Type,Management IP,Username,Password,Status,Circuit ID,ISP Provider,Bandwidth,Customer Count,Migration Phase,Migration Date,Priority,Notes\n";
+            
+            allData.forEach(item => {
+                const row = [
+                    item.siteid || '',
+                    item.sitename || '',
+                    item.sitetype || '',
+                    item.physicaladdress || '',
+                    item.accessinfo || '',
+                    item.devicename || '',
+                    item.devicetype || '',
+                    item.managementip || '',
+                    item.username || '',
+                    item.password || '',
+                    item.status || '',
+                    item.circuitid || '',
+                    item.ispprovider || '',
+                    item.bandwidth || '',
+                    item.customercount || '',
+                    item.migrationphase || '',
+                    item.migrationdate || '',
+                    item.priority || '',
+                    item.notes || ''
+                ].map(field => `"${String(field).replace(/"/g, '""')}"`).join(',');
+                
+                csvContent += row + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'beamspeed_migration_' + new Date().toISOString().slice(0,10) + '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // Helper functions
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+        
+        function updateStatusColor(select) {
+            switch(select.value) {
+                case 'Active':
+                    select.style.background = '#10b981';
+                    select.style.color = 'white';
+                    break;
+                case 'Shutdown':
+                    select.style.background = '#f59e0b';
+                    select.style.color = 'white';
+                    break;
+                case 'Inactive':
+                    select.style.background = '#ef4444';
+                    select.style.color = 'white';
+                    break;
+            }
+        }
+        
+        function updatePriorityColor(select) {
+            switch(select.value) {
+                case 'High':
+                    select.style.background = '#fce7f3';
+                    select.style.color = '#be185d';
+                    break;
+                case 'Medium':
+                    select.style.background = '#fef3c7';
+                    select.style.color = '#d97706';
+                    break;
+                case 'Low':
+                    select.style.background = '#dbeafe';
+                    select.style.color = '#1e40af';
+                    break;
+            }
+        }
+        
+        function updateStats() {
+            // Count unique sites using Set
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            document.getElementById('totalSites').textContent = uniqueSites;
+            
+            // Total devices is the total number of rows
+            document.getElementById('totalDevices').textContent = allData.length;
+            
+            let active = 0, pending = 0, completed = 0;
+            
+            allData.forEach(item => {
+                if (item.status === 'Active') active++;
+                if (item.migrationphase === 'Complete') completed++;
+                else if (item.migrationphase) pending++;
+            });
+            
+            document.getElementById('activeDevices').textContent = active;
+            document.getElementById('pendingMigration').textContent = pending;
+            document.getElementById('completed').textContent = completed;
+        }
+        
+        // Dashboard functions
+        function updateDashboard() {
+            if (!allData || allData.length === 0) return;
+            
+            // Calculate unique sites
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            const totalDevices = allData.length;
+            const activeDevices = allData.filter(item => item.status === 'Active').length;
+            const completedDevices = allData.filter(item => item.migrationphase === 'Complete').length;
+            const migrationProgress = Math.round((completedDevices / totalDevices) * 100);
+            
+            // Update KPIs with animation
+            animateValue(document.getElementById('dashTotalSites'), 0, uniqueSites, 1000);
+            animateValue(document.getElementById('dashTotalDevices'), 0, totalDevices, 1000);
+            animateValue(document.getElementById('dashActiveDevices'), 0, activeDevices, 1000);
+            document.getElementById('dashProgress').textContent = migrationProgress + '%';
+            
+            // Update progress bar
+            document.getElementById('overallProgressBar').style.width = migrationProgress + '%';
+            document.getElementById('overallProgressText').textContent = migrationProgress + '%';
+            
+            // Phase breakdown
+            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1').length;
+            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2').length;
+            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3').length;
+            const completeCount = allData.filter(item => item.migrationphase === 'Complete').length;
+            
+            document.getElementById('phase1Count').textContent = phase1Count + ' devices';
+            document.getElementById('phase2Count').textContent = phase2Count + ' devices';
+            document.getElementById('phase3Count').textContent = phase3Count + ' devices';
+            
+            // Update phase status
+            if (completeCount > 0 || phase2Count > 0 || phase3Count > 0) {
+                document.getElementById('phase1').classList.add('completed');
+            }
+            if (phase2Count > 0) {
+                document.getElementById('phase2').classList.add('active');
+            }
+            if (phase3Count > 0) {
+                document.getElementById('phase2').classList.remove('active');
+                document.getElementById('phase2').classList.add('completed');
+                document.getElementById('phase3').classList.add('active');
+            }
+            
+            // Priority distribution
+            const highPriority = allData.filter(item => item.priority === 'High').length;
+            const mediumPriority = allData.filter(item => item.priority === 'Medium').length;
+            const lowPriority = allData.filter(item => item.priority === 'Low').length;
+            const maxPriority = Math.max(highPriority, mediumPriority, lowPriority, 1);
+            
+            const highBar = document.getElementById('highPriorityBar');
+            const mediumBar = document.getElementById('mediumPriorityBar');
+            const lowBar = document.getElementById('lowPriorityBar');
+            
+            setTimeout(() => {
+                highBar.style.width = (highPriority / maxPriority * 100) + '%';
+                highBar.textContent = highPriority + ' devices';
+                mediumBar.style.width = (mediumPriority / maxPriority * 100) + '%';
+                mediumBar.textContent = mediumPriority + ' devices';
+                lowBar.style.width = (lowPriority / maxPriority * 100) + '%';
+                lowBar.textContent = lowPriority + ' devices';
+            }, 100);
+            
+            // Update site cards
+            updateSiteCards();
+        }
+        
+        function updateSiteCards() {
+            const sitesGrid = document.getElementById('sitesGrid');
+            if (!sitesGrid) return;
+            
+            sitesGrid.innerHTML = '';
+            
+            // Group devices by site
+            const siteGroups = {};
+            allData.forEach(item => {
+                const siteKey = item.siteid;
+                if (!siteGroups[siteKey]) {
+                    siteGroups[siteKey] = {
+                        siteid: item.siteid,
+                        sitename: item.sitename,
+                        sitetype: item.sitetype,
+                        devices: [],
+                        totalBandwidth: item.bandwidth || '',
+                        totalCustomers: 0,
+                        phases: new Set(),
+                        statuses: new Set()
+                    };
+                }
+                siteGroups[siteKey].devices.push(item);
+                siteGroups[siteKey].totalCustomers += parseInt(item.customercount) || 0;
+                siteGroups[siteKey].phases.add(item.migrationphase);
+                siteGroups[siteKey].statuses.add(item.status);
+            });
+            
+            // Create site cards
+            Object.values(siteGroups).forEach(site => {
+                const card = document.createElement('div');
+                card.className = 'site-card';
+                card.onclick = () => switchToTableView();
+                
+                // Determine overall site status
+                let siteStatus = 'INACTIVE';
+                let statusClass = 'status-inactive-card';
+                if (site.statuses.has('Active')) {
+                    siteStatus = 'ACTIVE';
+                    statusClass = 'status-active-card';
+                } else if (site.statuses.has('Shutdown')) {
+                    siteStatus = 'PENDING';
+                    statusClass = 'status-pending';
+                }
+                
+                // Get primary phase
+                let primaryPhase = 'Phase 1';
+                if (site.phases.has('Complete')) primaryPhase = 'Complete';
+                else if (site.phases.has('Phase 3')) primaryPhase = 'Phase 3';
+                else if (site.phases.has('Phase 2')) primaryPhase = 'Phase 2';
+                
+                card.innerHTML = `
+                    <div class="site-header">
+                        <div>
+                            <div class="site-name">${site.sitename || 'Unnamed Site'}</div>
+                            <div class="site-id">${site.siteid}</div>
+                        </div>
+                        <div class="site-status ${statusClass}">${siteStatus}</div>
+                    </div>
+                    <div class="site-metrics">
+                        <div class="site-metric">
+                            <span class="metric-label">Devices</span>
+                            <span class="metric-value">${site.devices.length}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Bandwidth</span>
+                            <span class="metric-value">${site.totalBandwidth || 'N/A'}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Customers</span>
+                            <span class="metric-value">${site.totalCustomers}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Phase</span>
+                            <span class="metric-value">${primaryPhase}</span>
+                        </div>
+                    </div>
+                `;
+                
+                sitesGrid.appendChild(card);
+            });
+        }
+        
+        function filterSites(filter) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Filter site cards based on selection
+            const cards = document.querySelectorAll('.site-card');
+            cards.forEach(card => {
+                const status = card.querySelector('.site-status').textContent;
+                const phase = card.querySelector('.metric-value:last-child').textContent;
+                
+                let show = false;
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'critical':
+                        show = status === 'ACTIVE' && phase !== 'Complete';
+                        break;
+                    case 'pending':
+                        show = status === 'PENDING' || phase.includes('Phase');
+                        break;
+                    case 'completed':
+                        show = phase === 'Complete';
+                        break;
+                }
+                
+                card.style.display = show ? 'block' : 'none';
+            });
+        }
+        
+        function animateValue(element, start, end, duration) {
+            if (!element) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+        
+        function showSaveIndicator() {
+            const indicator = document.createElement('div');
+            indicator.textContent = '✓ Saved to Database';
+            indicator.style.cssText = 'position: fixed; top: 70px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+        }
+        
+        function showUndoIndicator() {
+            const indicator = document.createElement('div');
+            indicator.textContent = '↩️ Change undone';
+            indicator.style.cssText = 'position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                indicator.remove();
+            }, 2000);
+        }
+        
+        // Set up real-time subscription
+        supabaseClient
+            .channel('migration_tracker_changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'migration_tracker' }, 
+                (payload) => {
+                    console.log('Database change detected:', payload);
+                    loadData();
+                }
+            )
+            .subscribe();
+        
+        // Auto-refresh every 30 seconds as backup
+        setInterval(loadData, 30000);
+        
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+        });
+    </script>
+</body>
+</html>
+                
