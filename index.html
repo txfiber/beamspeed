@@ -1823,14 +1823,28 @@
             }
             
             const newDevice = {
-                ...existingSite,
-                id: undefined,
+                siteid: existingSite.siteid || '',
+                sitename: existingSite.sitename || '',
+                sitetype: existingSite.sitetype || '',
+                physicaladdress: existingSite.physicaladdress || '',
+                accessinfo: existingSite.accessinfo || '',
                 devicename: 'NEW-DEVICE',
                 devicetype: '',
                 managementip: '',
+                username: existingSite.username || '',
                 password: '',
+                status: 'Active',
+                circuitid: existingSite.circuitid || '',
+                ispprovider: existingSite.ispprovider || '',
+                bandwidth: existingSite.bandwidth || '',
+                customercount: existingSite.customercount || 0,
+                migrationphase: existingSite.migrationphase || 'Phase 1',
+                migrationdate: existingSite.migrationdate || null,
+                priority: existingSite.priority || 'Medium',
                 notes: ''
             };
+            
+            delete newDevice.id; // Make sure we don't copy the ID
             
             try {
                 const { data, error } = await supabaseClient
@@ -1844,12 +1858,13 @@
                     allData.push(data[0]);
                     renderTable();
                     updateStats();
+                    updateDashboard();
                     closeModal();
                 }
                 
             } catch (error) {
                 console.error('Add device error:', error);
-                alert('Failed to add device');
+                alert('Failed to add device: ' + error.message);
             }
         }
         
