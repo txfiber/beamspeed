@@ -1162,15 +1162,14 @@
             <table id="migrationTable" style="display: none;">
                 <thead>
                     <tr>
-                        <th colspan="5" class="category-header">SITE INFORMATION</th>
+                        <th colspan="4" class="category-header">SITE INFORMATION</th>
                         <th colspan="6" class="category-header">NETWORK DETAILS</th>
                         <th colspan="4" class="category-header">CONNECTIVITY</th>
                         <th colspan="4" class="category-header">MIGRATION</th>
                         <th colspan="1" class="category-header">ACTIONS</th>
                     </tr>
                     <tr>
-                        <th onclick="sortTable('siteid')">Site ID</th>
-                        <th onclick="sortTable('sitename')">Site Name</th>
+                        <th colspan="2" onclick="sortTable('siteid')">Site Assignment</th>
                         <th onclick="sortTable('sitetype')">Site Type</th>
                         <th onclick="sortTable('physicaladdress')">Physical Address</th>
                         <th onclick="sortTable('accessinfo')">Access Info</th>
@@ -1491,8 +1490,30 @@
                 lastSiteId = item.siteid;
                 
                 // Site Information
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.siteid || ''}" data-field="siteid" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.sitename || ''}" data-field="sitename" onchange="updateCell(this, ${item.id})">`;
+// Site assignment dropdown (replaces both siteid and sitename inputs)
+const siteCell = row.insertCell();
+siteCell.colSpan = 2; // Takes up both Site ID and Site Name columns
+siteCell.innerHTML = `
+    <select class="editable" style="width: 100%; min-width: 200px;" onchange="updateSiteAssignment(this, ${item.id})">
+        <option value="${item.siteid}|${item.sitename}" selected>${item.siteid} - ${item.sitename}</option>
+    </select>`;
+
+// Populate the dropdown with all unique sites
+const siteSelect = siteCell.querySelector('select');
+const uniqueSites = {};
+allData.forEach(d => {
+    if (d.siteid && !uniqueSites[d.siteid]) {
+        uniqueSites[d.siteid] = d.sitename;
+    }
+});
+Object.entries(uniqueSites).forEach(([id, name]) => {
+    if (id !== item.siteid) {
+        const option = document.createElement('option');
+        option.value = `${id}|${name}`;
+        option.textContent = `${id} - ${name}`;
+        siteSelect.appendChild(option);
+    }
+});
                 row.insertCell().innerHTML = `
                     <select class="editable" data-field="sitetype" onchange="updateCell(this, ${item.id})">
                         <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
@@ -1597,6 +1618,51 @@
                 updateDashboard();
                 
             } catch (error) {
+           // Update site assignment for a device
+        async function updateSiteAssignment(element, id) {
+            const [newSiteId, newSiteName] = element.value.split('|');
+            
+            // Find the site's details to copy
+            const siteTemplate = allData.find(item => item.siteid === newSiteId);
+            
+            if (!siteTemplate) {
+                alert('Site not found');
+                return;
+            }
+            
+            try {
+                // Update both site fields and inherit site properties
+                const updates = {
+                    siteid: newSiteId,
+                    sitename: newSiteName,
+                    sitetype: siteTemplate.sitetype,
+                    physicaladdress: siteTemplate.physicaladdress,
+                    accessinfo: siteTemplate.accessinfo
+                };
+                
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .update(updates)
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                // Update local data
+                const index = allData.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    Object.assign(allData[index], updates);
+                }
+                
+                showSaveIndicator();
+                renderTable(); // Re-render to update grouping
+                updateStats();
+                updateDashboard();
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Failed to update site assignment. Please try again.');
+            }
+        }
                 console.error('Update error:', error);
                 alert('Failed to save changes. Please try again.');
                 element.value = oldValue;
