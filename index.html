@@ -521,6 +521,62 @@
             font-weight: bold;
         }
         
+        /* Collapsible Table Styles */
+        .city-row {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .city-row:hover {
+            background: linear-gradient(90deg, #7c7ff3 0%, #9d70f8 100%);
+        }
+        
+        .city-row td {
+            padding: 15px 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .expand-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .location-row {
+            background: #f0f4f8;
+            font-weight: 600;
+        }
+        
+        .location-row.hidden {
+            display: none;
+        }
+        
+        .device-row {
+            background: white;
+        }
+        
+        .device-row.hidden {
+            display: none;
+        }
+        
+        .device-row td:first-child {
+            padding-left: 60px;
+        }
+        
+        .location-stats {
+            color: #6b7280;
+            font-size: 0.9em;
+            font-weight: normal;
+            margin-left: 10px;
+        }
+        
         /* Table View Styles */
         .container {
             background: white;
@@ -1110,7 +1166,7 @@
     <!-- Table View (Original) -->
     <div class="container hidden" id="mainContainer">
         <div class="header">
-            <div class="sync-status" id="syncStatus">✅ Connected to Supabase</div>
+            <div class="sync-status" id="syncStatus">[OK] Connected to Supabase</div>
             <div class="logo">resound</div>
             <h1>BeamSpeed Network Migration Tracker</h1>
             <div class="subtitle">Real-Time Multi-User Dashboard</div>
@@ -1118,18 +1174,18 @@
         </div>
         
         <div class="controls">
-            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh</button>
+            <button class="btn btn-primary" onclick="loadData()">[Refresh]</button>
             <div class="button-group">
-                <button class="btn btn-success" onclick="addRow()">🏢 Add Site</button>
-                <button class="btn btn-secondary" onclick="showAddDeviceModal()">📡 Add Device</button>
+                <button class="btn btn-success" onclick="addRow()">[Add Site]</button>
+                <button class="btn btn-secondary" onclick="showAddDeviceModal()">[Add Device]</button>
             </div>
-            <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
-            <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
-            <button class="btn btn-primary" onclick="sortTable('sitename')">🏢 Sort by Site Name</button>
-            <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
-            <button class="btn btn-dashboard" onclick="switchToDashboard()">📈 Dashboard</button>
-            <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
-            <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
+            <button class="btn btn-warning" onclick="undoLastChange()">[Undo]</button>
+            <button class="btn btn-primary" onclick="exportToExcel()">[Export]</button>
+            <button class="btn btn-primary" onclick="sortTable('siteid')">[Sort by Site]</button>
+            <button class="btn btn-primary" onclick="sortTable('sitetype')">[Sort by Type]</button>
+            <button class="btn btn-dashboard" onclick="switchToDashboard()">[Dashboard]</button>
+            <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">[Logout]</button>
+            <input type="text" class="search-box" placeholder="Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
         </div>
         
         <div class="footer">
@@ -1162,15 +1218,14 @@
             <table id="migrationTable" style="display: none;">
                 <thead>
                     <tr>
-                        <th colspan="5" class="category-header">SITE INFORMATION</th>
+                        <th colspan="4" class="category-header">SITE INFORMATION</th>
                         <th colspan="6" class="category-header">NETWORK DETAILS</th>
                         <th colspan="4" class="category-header">CONNECTIVITY</th>
                         <th colspan="4" class="category-header">MIGRATION</th>
                         <th colspan="1" class="category-header">ACTIONS</th>
                     </tr>
                     <tr>
-                        <th onclick="sortTable('siteid')">Site ID</th>
-                        <th onclick="sortTable('sitename')">Site Name</th>
+                        <th colspan="2" onclick="sortTable('siteid')">Site Assignment</th>
                         <th onclick="sortTable('sitetype')">Site Type</th>
                         <th onclick="sortTable('physicaladdress')">Physical Address</th>
                         <th onclick="sortTable('accessinfo')">Access Info</th>
@@ -1209,7 +1264,7 @@
             </select>
             
             <div class="info-box">
-                💡 The new device will inherit all site information (address, access info, etc.) from the selected site. You'll only need to fill in device-specific details like Device Name, Type, and Management IP.
+                The new device will inherit all site information (address, access info, etc.) from the selected site. You'll only need to fill in device-specific details like Device Name, Type, and Management IP.
             </div>
             
             <div class="modal-actions">
@@ -1219,6 +1274,50 @@
         </div>
     </div>
     
+    <!-- Modal for Add Site -->
+    <div class="modal-overlay" id="siteModal">
+        <div class="modal">
+            <h3>Create New Site</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location details:</p>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <input type="radio" name="cityOption" value="new" checked onclick="toggleCityInput()">
+                    <span style="margin-left: 8px;">New City/Region</span>
+                </label>
+                <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
+                
+                <label style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <input type="radio" name="cityOption" value="existing" onclick="toggleCityInput()">
+                    <span style="margin-left: 8px;">Existing City/Region</span>
+                </label>
+                <select id="existingCity" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; display: none;" disabled>
+                    <option value="">Select a city...</option>
+                </select>
+            </div>
+            
+            <label>Location ID:</label>
+            <input type="text" id="locationId" placeholder="e.g., TWR01, DC01, CAB03" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
+            
+            <label>Site Type:</label>
+            <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+                <option value="Data Center">Data Center</option>
+                <option value="Tower Site">Tower Site</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Office">Office</option>
+            </select>
+            
+            <div class="info-box">
+                This will create site: <strong id="sitePreview">CITY-LOCATION</strong>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeSiteModal()">Cancel</button>
+                <button class="btn btn-success" onclick="createNewSite()">Create Site</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Authentication Configuration
         const AUTH_CONFIG = {
@@ -1295,7 +1394,7 @@
         
         // Load data from Supabase
         async function loadData() {
-            document.getElementById('syncStatus').textContent = '🔄 Loading...';
+            document.getElementById('syncStatus').textContent = '[Loading...]';
             document.getElementById('syncStatus').classList.add('syncing');
             
             try {
@@ -1312,12 +1411,12 @@
                 updateDashboard();
                 populateSiteDropdown();
                 
-                document.getElementById('syncStatus').textContent = '✅ Connected to Supabase';
+                document.getElementById('syncStatus').textContent = '[OK] Connected to Supabase';
                 document.getElementById('syncStatus').classList.remove('syncing');
                 
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('syncStatus').textContent = '❌ Connection Failed';
+                document.getElementById('syncStatus').textContent = '[ERROR] Connection Failed';
                 document.getElementById('syncStatus').classList.remove('syncing');
             }
         }
@@ -1438,134 +1537,164 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
-            document.getElementById('migrationTable').style.display = 'table';
-            document.getElementById('loadingMessage').style.display = 'none';
+            if (allData.length === 0) {
+                document.getElementById('loadingMessage').style.display = 'block';
+                document.getElementById('loadingMessage').textContent = 'No data available';
+                document.getElementById('migrationTable').style.display = 'none';
+                return;
+            }
             
-            // Sort data by siteid to group devices together
-            const sortedData = [...allData].sort((a, b) => {
-                if (a.siteid === b.siteid) {
-                    return (a.devicename || '').localeCompare(b.devicename || '');
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('migrationTable').style.display = 'table';
+            
+            // Group data by city and location
+            const groupedData = {};
+            allData.forEach(item => {
+                const parts = (item.siteid || '').split('-');
+                const city = parts[0] || 'UNASSIGNED';
+                const location = parts[1] || 'UNKNOWN';
+                
+                if (!groupedData[city]) {
+                    groupedData[city] = {};
                 }
-                return (a.siteid || '').localeCompare(b.siteid || '');
+                if (!groupedData[city][location]) {
+                    groupedData[city][location] = [];
+                }
+                groupedData[city][location].push(item);
             });
             
-            let lastSiteId = null;
-            
-            sortedData.forEach(item => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', item.id);
+            // Render grouped data
+            Object.entries(groupedData).forEach(([city, locations]) => {
+                // City header row
+                const cityRow = document.createElement('tr');
+                cityRow.className = 'city-row';
+                cityRow.setAttribute('data-city', city);
+                cityRow.onclick = () => toggleCity(city);
                 
-                // Add visual grouping for devices at same site
-                if (lastSiteId === item.siteid && lastSiteId !== null) {
-                    row.classList.add('site-group');
-                }
-                lastSiteId = item.siteid;
+                const deviceCount = Object.values(locations).reduce((sum, devices) => sum + devices.length, 0);
+                cityRow.innerHTML = `
+                    <td colspan="20">
+                        <span class="expand-icon">▼</span> ${city}
+                        <span class="location-stats">(${Object.keys(locations).length} locations, ${deviceCount} devices)</span>
+                    </td>
+                `;
+                tbody.appendChild(cityRow);
                 
-                // Site Information
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.siteid || ''}" data-field="siteid" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.sitename || ''}" data-field="sitename" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `
-                    <select class="editable" data-field="sitetype" onchange="updateCell(this, ${item.id})">
-                        <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
-                        <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
-                        <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
-                        <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
-                    </select>`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.physicaladdress || ''}" data-field="physicaladdress" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.accessinfo || ''}" data-field="accessinfo" onchange="updateCell(this, ${item.id})">`;
-                
-                // Network Details
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicename || ''}" data-field="devicename" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicetype || ''}" data-field="devicetype" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.managementip || ''}" data-field="managementip" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.username || ''}" data-field="username" onchange="updateCell(this, ${item.id})">`;
-                
-                // Password field with toggle
-                const pwdId = 'pwd-' + passwordIdCounter++;
-                row.insertCell().innerHTML = `
-                    <div class="password-container">
-                        <input type="password" class="editable password-input" value="${item.password || ''}" data-field="password" id="${pwdId}" onchange="updateCell(this, ${item.id})">
-                        <button class="password-toggle" onclick="togglePassword('${pwdId}')">👁️</button>
-                    </div>`;
-                
-                // Status with color
-                const statusCell = row.insertCell();
-                statusCell.innerHTML = `
-                    <select class="editable" data-field="status" onchange="updateCell(this, ${item.id}); updateStatusColor(this)">
-                        <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                        <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                        <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                    </select>`;
-                updateStatusColor(statusCell.querySelector('select'));
-                
-                // Connectivity
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.circuitid || ''}" data-field="circuitid" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.ispprovider || ''}" data-field="ispprovider" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.bandwidth || ''}" data-field="bandwidth" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="number" class="editable" value="${item.customercount || ''}" data-field="customercount" onchange="updateCell(this, ${item.id})">`;
-                
-                // Migration
-                row.insertCell().innerHTML = `
-                    <select class="editable" data-field="migrationphase" onchange="updateCell(this, ${item.id})">
-                        <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
-                        <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
-                        <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
-                        <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
-                    </select>`;
-                
-                const dateValue = item.migrationdate ? item.migrationdate.split('T')[0] : '';
-                row.insertCell().innerHTML = `<input type="date" class="editable" value="${dateValue}" data-field="migrationdate" onchange="updateCell(this, ${item.id})">`;
-                
-                const priorityCell = row.insertCell();
-                priorityCell.innerHTML = `
-                    <select class="editable" data-field="priority" onchange="updateCell(this, ${item.id}); updatePriorityColor(this)">
-                        <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
-                        <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                        <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
-                    </select>`;
-                updatePriorityColor(priorityCell.querySelector('select'));
-                
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.notes || ''}" data-field="notes" onchange="updateCell(this, ${item.id})">`;
-                
-                // Action
-                row.insertCell().innerHTML = `<button class="btn btn-danger" onclick="deleteRow(${item.id})">❌</button>`;
+                // Location rows
+                Object.entries(locations).forEach(([location, devices]) => {
+                    // Location header row
+                    const locationRow = document.createElement('tr');
+                    locationRow.className = 'location-row';
+                    locationRow.setAttribute('data-city', city);
+                    locationRow.innerHTML = `
+                        <td colspan="20" style="padding-left: 30px;">
+                            [Location] ${location}
+                            <span class="location-stats">(${devices.length} device${devices.length > 1 ? 's' : ''})</span>
+                        </td>
+                    `;
+                    tbody.appendChild(locationRow);
+                    
+                    // Device rows
+                    devices.forEach((item, index) => {
+                        const row = document.createElement('tr');
+                        row.className = 'device-row';
+                        row.setAttribute('data-city', city);
+                        row.setAttribute('data-id', item.id);
+                        
+                        const passwordInputId = `password-${passwordIdCounter++}`;
+                        
+                        row.innerHTML = `
+                            <td colspan="2">
+                                <input class="editable" data-field="siteid" value="${item.siteid || ''}" 
+                                    onblur="updateField(this, ${item.id}, 'siteid')" placeholder="CITY-LOCATION">
+                                <input class="editable" data-field="sitename" value="${item.sitename || ''}" 
+                                    onblur="updateField(this, ${item.id}, 'sitename')" placeholder="Site Name">
+                            </td>
+                            <td>
+                                <select class="editable" data-field="sitetype" onchange="updateField(this, ${item.id}, 'sitetype')">
+                                    <option value="" ${!item.sitetype ? 'selected' : ''}>Select Type</option>
+                                    <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
+                                    <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
+                                    <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
+                                    <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
+                                </select>
+                            </td>
+                            <td><input class="editable" data-field="username" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
+                            <td>
+                                <div class="password-container">
+                                    <input type="password" id="${passwordInputId}" class="editable password-input" data-field="password" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')">
+                                    <button class="password-toggle" onclick="togglePassword('${passwordInputId}')">[Show]</button>
+                                </div>
+                            </td>
+                            <td>
+                                <select class="editable" data-field="status" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
+                                    <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+                                    <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
+                                    <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                            </td>
+                            <td><input class="editable" data-field="circuitid" value="${item.circuitid || ''}" onblur="updateField(this, ${item.id}, 'circuitid')"></td>
+                            <td><input class="editable" data-field="ispprovider" value="${item.ispprovider || ''}" onblur="updateField(this, ${item.id}, 'ispprovider')"></td>
+                            <td><input class="editable" data-field="bandwidth" value="${item.bandwidth || ''}" onblur="updateField(this, ${item.id}, 'bandwidth')"></td>
+                            <td><input class="editable" type="number" data-field="customercount" value="${item.customercount || 0}" onblur="updateField(this, ${item.id}, 'customercount')"></td>
+                            <td>
+                                <select class="editable" data-field="migrationphase" onchange="updateField(this, ${item.id}, 'migrationphase')">
+                                    <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
+                                    <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
+                                    <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
+                                    <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
+                                </select>
+                            </td>
+                            <td><input class="editable" type="date" data-field="migrationdate" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
+                            <td>
+                                <select class="editable" data-field="priority" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
+                                    <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
+                                    <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                                    <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
+                                </select>
+                            </td>
+                            <td><input class="editable" data-field="notes" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
+                            <td class="actions-column">
+                                <button class="btn btn-danger" onclick="deleteRow(${item.id})">[Delete]</button>
+                            </td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                });
             });
         }
         
-        // Update cell in Supabase
-        async function updateCell(element, id) {
-            const field = element.getAttribute('data-field');
-            let value = element.value;
+        // Update field in database
+        async function updateField(element, id, field) {
+            const oldValue = allData.find(item => item.id === id)?.[field];
+            const newValue = element.type === 'number' ? Number(element.value) : element.value;
             
-            // Find the old value for undo
-            const oldItem = allData.find(item => item.id === id);
-            const oldValue = oldItem ? oldItem[field] : '';
-            
-            // Add to undo history
-            addToUndoHistory('update', id, field, oldValue, value);
-            
-            // Handle number fields
-            if (field === 'customercount') {
-                value = parseInt(value) || 0;
-            }
+            if (oldValue === newValue) return;
             
             try {
                 const { error } = await supabaseClient
                     .from('migration_tracker')
-                    .update({ [field]: value })
+                    .update({ [field]: newValue })
                     .eq('id', id);
                 
                 if (error) throw error;
                 
-                // Update local data
+                addToUndoHistory('update', id, field, oldValue, newValue);
+                
                 const index = allData.findIndex(item => item.id === id);
                 if (index !== -1) {
-                    allData[index][field] = value;
+                    allData[index][field] = newValue;
                 }
                 
                 showSaveIndicator();
                 updateStats();
                 updateDashboard();
+                
+                // If siteid changed, re-render to update grouping
+                if (field === 'siteid') {
+                    renderTable();
+                }
                 
             } catch (error) {
                 console.error('Update error:', error);
@@ -1574,15 +1703,110 @@
             }
         }
         
-        // Add new row (site with first device)
-        async function addRow() {
-            const newRow = {
-                siteid: 'NEW-SITE',
-                sitename: 'New Site',
-                sitetype: 'Cabinet',
+        // Show site creation modal
+        function addRow() {
+            document.getElementById('siteModal').style.display = 'flex';
+            populateCityDropdown();
+            document.getElementById('newCity').focus();
+        }
+        
+        // Close site modal
+        function closeSiteModal() {
+            document.getElementById('siteModal').style.display = 'none';
+            document.getElementById('newCity').value = '';
+            document.getElementById('locationId').value = '';
+            document.getElementById('existingCity').value = '';
+            document.getElementById('sitePreview').textContent = 'CITY-LOCATION';
+            document.querySelector('input[name="cityOption"][value="new"]').checked = true;
+            toggleCityInput();
+        }
+        
+        // Toggle between new and existing city input
+        function toggleCityInput() {
+            const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+            const newCityInput = document.getElementById('newCity');
+            const existingCitySelect = document.getElementById('existingCity');
+            
+            if (cityOption === 'new') {
+                newCityInput.style.display = 'block';
+                newCityInput.disabled = false;
+                existingCitySelect.style.display = 'none';
+                existingCitySelect.disabled = true;
+            } else {
+                newCityInput.style.display = 'none';
+                newCityInput.disabled = true;
+                existingCitySelect.style.display = 'block';
+                existingCitySelect.disabled = false;
+            }
+            updateSitePreview();
+        }
+        
+        // Update the site preview
+        function updateSitePreview() {
+            const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+            const city = cityOption === 'new' 
+                ? document.getElementById('newCity').value.toUpperCase() 
+                : document.getElementById('existingCity').value;
+            const location = document.getElementById('locationId').value.toUpperCase();
+            
+            const preview = (city && location) ? `${city}-${location}` : 'CITY-LOCATION';
+            document.getElementById('sitePreview').textContent = preview;
+        }
+        
+        // Populate city dropdown with existing cities
+        function populateCityDropdown() {
+            const citySelect = document.getElementById('existingCity');
+            citySelect.innerHTML = '<option value="">Select a city...</option>';
+            
+            // Extract unique cities from existing data
+            const cities = new Set();
+            allData.forEach(item => {
+                if (item.siteid && item.siteid.includes('-')) {
+                    const city = item.siteid.split('-')[0];
+                    cities.add(city);
+                }
+            });
+            
+            // Add cities to dropdown
+            Array.from(cities).sort().forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                citySelect.appendChild(option);
+            });
+        }
+        
+        // Create new site with first device
+        async function createNewSite() {
+            const cityOption = document.querySelector('input[name="cityOption"]:checked').value;
+            const city = cityOption === 'new' 
+                ? document.getElementById('newCity').value.trim().toUpperCase()
+                : document.getElementById('existingCity').value;
+            const locationId = document.getElementById('locationId').value.trim().toUpperCase();
+            const siteType = document.getElementById('newSiteType').value;
+            
+            // Validation
+            if (!city || !locationId) {
+                alert('Please enter both City and Location ID');
+                return;
+            }
+            
+            const siteId = `${city}-${locationId}`;
+            const siteName = siteId; // Using same for both
+            
+            // Check if site ID already exists
+            if (allData.some(item => item.siteid === siteId)) {
+                alert('This Site ID already exists. Please use a unique Location ID.');
+                return;
+            }
+            
+            const newSite = {
+                siteid: siteId,
+                sitename: siteName,
+                sitetype: siteType,
                 physicaladdress: '',
                 accessinfo: '',
-                devicename: 'NEW-DEVICE',
+                devicename: `${siteId}-DEVICE-01`,
                 devicetype: '',
                 managementip: '',
                 username: '',
@@ -1595,13 +1819,13 @@
                 migrationphase: 'Phase 1',
                 migrationdate: null,
                 priority: 'Medium',
-                notes: ''
+                notes: 'Initial device'
             };
             
             try {
                 const { data, error } = await supabaseClient
                     .from('migration_tracker')
-                    .insert([newRow])
+                    .insert([newSite])
                     .select();
                 
                 if (error) throw error;
@@ -1613,24 +1837,32 @@
                     updateDashboard();
                     populateSiteDropdown();
                     
-                    // Scroll to new row
-                    const rows = document.querySelectorAll('#tableBody tr');
-                    if (rows.length > 0) {
-                        rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
+                    // Close modal and show success
+                    closeSiteModal();
+                    showSaveIndicator();
                     
-                    addToUndoHistory('add', data[0].id, null, null, data[0]);
+                    // Scroll to new site
+                    setTimeout(() => {
+                        const rows = document.querySelectorAll('#tableBody tr');
+                        const newRow = Array.from(rows).find(row => 
+                            row.querySelector('input[data-field="siteid"]')?.value === siteId
+                        );
+                        if (newRow) {
+                            newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            newRow.style.animation = 'fadeIn 0.5s';
+                        }
+                    }, 100);
                 }
                 
             } catch (error) {
-                console.error('Add error:', error);
-                alert('Failed to add new site. Please try again.');
+                console.error('Add site error:', error);
+                alert('Failed to create site. Please try again.');
             }
         }
         
         // Delete row
         async function deleteRow(id) {
-            if (confirm('Are you sure you want to delete this site?')) {
+            if (confirm('Are you sure you want to delete this device?')) {
                 const deletedItem = allData.find(item => item.id === id);
                 
                 try {
@@ -1651,7 +1883,7 @@
                     
                 } catch (error) {
                     console.error('Delete error:', error);
-                    alert('Failed to delete site. Please try again.');
+                    alert('Failed to delete. Please try again.');
                 }
             }
         }
@@ -1803,10 +2035,10 @@
             
             if (input.type === 'password') {
                 input.type = 'text';
-                button.textContent = '🙈';
+                button.textContent = '[Hide]';
             } else {
                 input.type = 'password';
-                button.textContent = '👁️';
+                button.textContent = '[Show]';
             }
         }
         
@@ -1844,6 +2076,27 @@
             }
         }
         
+        // Toggle city expansion/collapse
+        function toggleCity(city) {
+            const icon = document.querySelector(`tr[data-city="${city}"] .expand-icon`);
+            const isCollapsed = icon.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                icon.classList.remove('collapsed');
+                icon.textContent = '▼';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.remove('hidden');
+                });
+            } else {
+                icon.classList.add('collapsed');
+                icon.textContent = '▶';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.add('hidden');
+                });
+            }
+        }
+        
+        // Update stats
         function updateStats() {
             // Count unique sites using Set
             const uniqueSites = new Set(allData.map(item => item.siteid)).size;
@@ -2065,7 +2318,7 @@
         
         function showSaveIndicator() {
             const indicator = document.createElement('div');
-            indicator.textContent = '✓ Saved to Database';
+            indicator.textContent = 'Saved to Database';
             indicator.style.cssText = 'position: fixed; top: 70px; right: 20px; background: #10b981; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
             document.body.appendChild(indicator);
             
@@ -2076,7 +2329,7 @@
         
         function showUndoIndicator() {
             const indicator = document.createElement('div');
-            indicator.textContent = '↩️ Change undone';
+            indicator.textContent = 'Change undone';
             indicator.style.cssText = 'position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: #f59e0b; color: white; padding: 10px 20px; border-radius: 6px; z-index: 9999;';
             document.body.appendChild(indicator);
             
@@ -2084,6 +2337,21 @@
                 indicator.remove();
             }, 2000);
         }
+        
+        // Add event listeners for preview updates
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = ['newCity', 'existingCity', 'locationId'];
+            inputs.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', updateSitePreview);
+                    element.addEventListener('change', updateSitePreview);
+                }
+            });
+            
+            // Check authentication on load
+            checkAuth();
+        });
         
         // Set up real-time subscription
         supabaseClient
@@ -2099,12 +2367,20 @@
         
         // Auto-refresh every 30 seconds as backup
         setInterval(loadData, 30000);
-        
-        // Load data on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            checkAuth();
-        });
     </script>
 </body>
-</html>
-                
+</html>ditable" data-field="physicaladdress" value="${item.physicaladdress || ''}" onblur="updateField(this, ${item.id}, 'physicaladdress')"></td>
+                            <td><input class="editable" data-field="accessinfo" value="${item.accessinfo || ''}" onblur="updateField(this, ${item.id}, 'accessinfo')"></td>
+                            <td><input class="editable" data-field="devicename" value="${item.devicename || ''}" onblur="updateField(this, ${item.id}, 'devicename')"></td>
+                            <td>
+                                <select class="editable" data-field="devicetype" onchange="updateField(this, ${item.id}, 'devicetype')">
+                                    <option value="" ${!item.devicetype ? 'selected' : ''}>Select Type</option>
+                                    <option value="Router" ${item.devicetype === 'Router' ? 'selected' : ''}>Router</option>
+                                    <option value="Switch" ${item.devicetype === 'Switch' ? 'selected' : ''}>Switch</option>
+                                    <option value="Firewall" ${item.devicetype === 'Firewall' ? 'selected' : ''}>Firewall</option>
+                                    <option value="Access Point" ${item.devicetype === 'Access Point' ? 'selected' : ''}>Access Point</option>
+                                    <option value="Server" ${item.devicetype === 'Server' ? 'selected' : ''}>Server</option>
+                                </select>
+                            </td>
+                            <td><input class="editable" data-field="managementip" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
+                            <td><input class="e
