@@ -1218,7 +1218,36 @@
             </div>
         </div>
     </div>
-    
+    <div class="modal-overlay" id="siteModal">
+    <div class="modal">
+        <h3>Create New Site</h3>
+        <p style="margin-bottom: 20px; color: #6b7280;">Enter the details for the new site:</p>
+        
+        <label>Site ID (Short Code):</label>
+        <input type="text" id="newSiteId" class="modal-input" placeholder="e.g., PHX-01, DAL-02" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+        
+        <label>Site Name:</label>
+        <input type="text" id="newSiteName" class="modal-input" placeholder="e.g., Phoenix Tower, Dallas Hub" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+        
+        <label>Site Type:</label>
+        <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            <option value="Data Center">Data Center</option>
+            <option value="Tower Site">Tower Site</option>
+            <option value="Cabinet">Cabinet</option>
+            <option value="Office">Office</option>
+        </select>
+        
+        <div class="info-box">
+            💡 You'll be able to add devices to this site after creation.
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn" style="background: #e5e7eb;" onclick="closeSiteModal()">Cancel</button>
+            <button class="btn btn-success" onclick="createNewSite()">Create Site</button>
+        </div>
+    </div>
+</div>
+
     <script>
         // Authentication Configuration
         const AUTH_CONFIG = {
@@ -1575,58 +1604,97 @@
         }
         
         // Add new row (site with first device)
-        async function addRow() {
-            const newRow = {
-                siteid: 'NEW-SITE',
-                sitename: 'New Site',
-                sitetype: 'Cabinet',
-                physicaladdress: '',
-                accessinfo: '',
-                devicename: 'NEW-DEVICE',
-                devicetype: '',
-                managementip: '',
-                username: '',
-                password: '',
-                status: 'Active',
-                circuitid: '',
-                ispprovider: '',
-                bandwidth: '',
-                customercount: 0,
-                migrationphase: 'Phase 1',
-                migrationdate: null,
-                priority: 'Medium',
-                notes: ''
-            };
+// Show site creation modal (replaces the old addRow)
+function addRow() {
+    document.getElementById('siteModal').style.display = 'flex';
+    document.getElementById('newSiteId').focus();
+}
+
+// Close site modal
+function closeSiteModal() {
+    document.getElementById('siteModal').style.display = 'none';
+    document.getElementById('newSiteId').value = '';
+    document.getElementById('newSiteName').value = '';
+}
+// Show site creation modal (replaces the old addRow)
+
+// Create new site with first device
+async function createNewSite() {
+    const siteId = document.getElementById('newSiteId').value.trim().toUpperCase();
+    const siteName = document.getElementById('newSiteName').value.trim();
+    const siteType = document.getElementById('newSiteType').value;
+    
+    // Validation
+    if (!siteId || !siteName) {
+        alert('Please enter both Site ID and Site Name');
+        return;
+    }
+    
+    // Check if site ID already exists
+    if (allData.some(item => item.siteid === siteId)) {
+        alert('This Site ID already exists. Please use a unique ID.');
+        return;
+    }
+    
+    const newSite = {
+        siteid: siteId,
+        sitename: siteName,
+        sitetype: siteType,
+        physicaladdress: '',
+        accessinfo: '',
+        devicename: `${siteId}-DEVICE-01`,
+        devicetype: '',
+        managementip: '',
+        username: '',
+        password: '',
+        status: 'Active',
+        circuitid: '',
+        ispprovider: '',
+        bandwidth: '',
+        customercount: 0,
+        migrationphase: 'Phase 1',
+        migrationdate: null,
+        priority: 'Medium',
+        notes: 'Initial device'
+    };
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('migration_tracker')
+            .insert([newSite])
+            .select();
+        
+        if (error) throw error;
+        
+        if (data && data[0]) {
+            allData.push(data[0]);
+            renderTable();
+            updateStats();
+            updateDashboard();
+            populateSiteDropdown();
             
-            try {
-                const { data, error } = await supabaseClient
-                    .from('migration_tracker')
-                    .insert([newRow])
-                    .select();
-                
-                if (error) throw error;
-                
-                if (data && data[0]) {
-                    allData.push(data[0]);
-                    renderTable();
-                    updateStats();
-                    updateDashboard();
-                    populateSiteDropdown();
-                    
-                    // Scroll to new row
-                    const rows = document.querySelectorAll('#tableBody tr');
-                    if (rows.length > 0) {
-                        rows[rows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }
-                    
-                    addToUndoHistory('add', data[0].id, null, null, data[0]);
+            // Close modal and show success
+            closeSiteModal();
+            showSaveIndicator();
+            
+            // Scroll to new site
+            setTimeout(() => {
+                const rows = document.querySelectorAll('#tableBody tr');
+                const newRow = Array.from(rows).find(row => 
+                    row.querySelector('input[data-field="siteid"]')?.value === siteId
+                );
+                if (newRow) {
+                    newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    newRow.style.animation = 'fadeIn 0.5s';
                 }
-                
-            } catch (error) {
-                console.error('Add error:', error);
-                alert('Failed to add new site. Please try again.');
-            }
+            }, 100);
         }
+        
+    } catch (error) {
+        console.error('Add site error:', error);
+        alert('Failed to create site. Please try again.');
+    }
+}
         
         // Delete row
         async function deleteRow(id) {
