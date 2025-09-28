@@ -1565,7 +1565,7 @@
                         const passwordId = `password-${item.id}`;
                         
                         row.innerHTML = `
-                            <td><input class="editable" value="${item.siteid || ''}" onblur="updateField(this, ${item.id}, 'siteid')"></td>
+                            <td><input class="editable" value="${item.siteid || ''}" readonly style="background: #f5f5f5; cursor: not-allowed;" title="Site ID cannot be changed"></td>
                             <td><input class="editable" value="${item.sitename || ''}" onblur="updateField(this, ${item.id}, 'sitename')"></td>
                             <td>
                                 <select class="editable" onchange="updateField(this, ${item.id}, 'sitetype')">
@@ -1593,10 +1593,10 @@
                             <td><input class="editable" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
                             <td style="position: relative;">
                                 <input class="editable" type="password" id="${passwordId}" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')" style="padding-right: 30px;">
-                                <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;">👁️</button>
+                                <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;" title="Toggle password visibility">👁️</button>
                             </td>
                             <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'status')" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
+                                <select class="editable" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
                                     <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
                                     <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
                                     <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
@@ -1616,7 +1616,7 @@
                             </td>
                             <td><input class="editable" type="date" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
                             <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'priority')" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
+                                <select class="editable" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
                                     <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
                                     <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
                                     <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
@@ -1624,7 +1624,7 @@
                             </td>
                             <td><input class="editable" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
                             <td style="text-align: center;">
-                                <button class="btn btn-danger" onclick="deleteRow(${item.id})">🗑️</button>
+                                <button class="btn btn-danger" onclick="deleteRow(${item.id})" title="Delete this device">🗑️</button>
                             </td>
                         `;
                         
