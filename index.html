@@ -521,6 +521,61 @@
             font-weight: bold;
         }
         
+        /* Collapsible Table Styles */
+        .city-row {
+            background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .city-row:hover {
+            background: linear-gradient(90deg, #7c7ff3 0%, #9d70f8 100%);
+        }
+        
+        .city-row td {
+            padding: 15px 12px;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            transition: transform 0.3s ease;
+        }
+        
+        .expand-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+        
+        .location-row {
+            background: #f0f4f8;
+            font-weight: 600;
+        }
+        
+        .location-row.hidden {
+            display: none;
+        }
+        
+        .device-row {
+            background: white;
+        }
+        
+        .device-row.hidden {
+            display: none;
+        }
+        
+        .device-row td:first-child {
+            padding-left: 60px;
+        }
+        
+        .location-stats {
+            color: #6b7280;
+            font-size: 0.9em;
+            font-weight: normal;
+            margin-left: 10px;
+        }
         /* Table View Styles */
         .container {
             background: white;
@@ -1476,162 +1531,8 @@
         }
         
         // Render table with visual grouping
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            document.getElementById('migrationTable').style.display = 'table';
-            document.getElementById('loadingMessage').style.display = 'none';
-            
-            // Sort data by siteid to group devices together
-            const sortedData = [...allData].sort((a, b) => {
-                if (a.siteid === b.siteid) {
-                    return (a.devicename || '').localeCompare(b.devicename || '');
-                }
-                return (a.siteid || '').localeCompare(b.siteid || '');
-            });
-            
-            let lastSiteId = null;
-            
-            sortedData.forEach(item => {
-                const row = tbody.insertRow();
-                row.setAttribute('data-id', item.id);
-                
-                // Add visual grouping for devices at same site
-                if (lastSiteId === item.siteid && lastSiteId !== null) {
-                    row.classList.add('site-group');
-                }
-                lastSiteId = item.siteid;
-                
-                // Site Information
-// Site assignment dropdown (replaces both siteid and sitename inputs)
-const siteCell = row.insertCell();
-siteCell.colSpan = 2; // Takes up both Site ID and Site Name columns
-siteCell.innerHTML = `
-    <select class="editable" style="width: 100%; min-width: 200px;" onchange="updateSiteAssignment(this, ${item.id})">
-        <option value="${item.siteid}|${item.sitename}" selected>${item.siteid}</option>
-    </select>`;
-
-// Populate the dropdown with all unique sites
-const siteSelect = siteCell.querySelector('select');
-const uniqueSites = {};
-allData.forEach(d => {
-    if (d.siteid && !uniqueSites[d.siteid]) {
-        uniqueSites[d.siteid] = d.sitename;
-    }
-});
-Object.entries(uniqueSites).forEach(([id, name]) => {
-    if (id !== item.siteid) {
-        const option = document.createElement('option');
-        option.value = `${id}|${name}`;
-        option.textContent = id;
-        siteSelect.appendChild(option);
-    }
-});
-                row.insertCell().innerHTML = `
-                    <select class="editable" data-field="sitetype" onchange="updateCell(this, ${item.id})">
-                        <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
-                        <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
-                        <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
-                        <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
-                    </select>`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.physicaladdress || ''}" data-field="physicaladdress" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.accessinfo || ''}" data-field="accessinfo" onchange="updateCell(this, ${item.id})">`;
-                
-                // Network Details
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicename || ''}" data-field="devicename" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.devicetype || ''}" data-field="devicetype" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.managementip || ''}" data-field="managementip" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.username || ''}" data-field="username" onchange="updateCell(this, ${item.id})">`;
-                
-                // Password field with toggle
-                const pwdId = 'pwd-' + passwordIdCounter++;
-                row.insertCell().innerHTML = `
-                    <div class="password-container">
-                        <input type="password" class="editable password-input" value="${item.password || ''}" data-field="password" id="${pwdId}" onchange="updateCell(this, ${item.id})">
-                        <button class="password-toggle" onclick="togglePassword('${pwdId}')">👁️</button>
-                    </div>`;
-                
-                // Status with color
-                const statusCell = row.insertCell();
-                statusCell.innerHTML = `
-                    <select class="editable" data-field="status" onchange="updateCell(this, ${item.id}); updateStatusColor(this)">
-                        <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                        <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                        <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                    </select>`;
-                updateStatusColor(statusCell.querySelector('select'));
-                
-                // Connectivity
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.circuitid || ''}" data-field="circuitid" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.ispprovider || ''}" data-field="ispprovider" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.bandwidth || ''}" data-field="bandwidth" onchange="updateCell(this, ${item.id})">`;
-                row.insertCell().innerHTML = `<input type="number" class="editable" value="${item.customercount || ''}" data-field="customercount" onchange="updateCell(this, ${item.id})">`;
-                
-                // Migration
-                row.insertCell().innerHTML = `
-                    <select class="editable" data-field="migrationphase" onchange="updateCell(this, ${item.id})">
-                        <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
-                        <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
-                        <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
-                        <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
-                    </select>`;
-                
-                const dateValue = item.migrationdate ? item.migrationdate.split('T')[0] : '';
-                row.insertCell().innerHTML = `<input type="date" class="editable" value="${dateValue}" data-field="migrationdate" onchange="updateCell(this, ${item.id})">`;
-                
-                const priorityCell = row.insertCell();
-                priorityCell.innerHTML = `
-                    <select class="editable" data-field="priority" onchange="updateCell(this, ${item.id}); updatePriorityColor(this)">
-                        <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
-                        <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                        <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
-                    </select>`;
-                updatePriorityColor(priorityCell.querySelector('select'));
-                
-                row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.notes || ''}" data-field="notes" onchange="updateCell(this, ${item.id})">`;
-                
-                // Action
-                row.insertCell().innerHTML = `<button class="btn btn-danger" onclick="deleteRow(${item.id})">❌</button>`;
-            });
+        });
         }
-        
-        // Update cell in Supabase
-        async function updateCell(element, id) {
-            const field = element.getAttribute('data-field');
-            let value = element.value;
-            
-            // Find the old value for undo
-            const oldItem = allData.find(item => item.id === id);
-            const oldValue = oldItem ? oldItem[field] : '';
-            
-            // Add to undo history
-            addToUndoHistory('update', id, field, oldValue, value);
-            
-            // Handle number fields
-            if (field === 'customercount') {
-                value = parseInt(value) || 0;
-            }
-            
-            try {
-                const { error } = await supabaseClient
-                    .from('migration_tracker')
-                    .update({ [field]: value })
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                // Update local data
-                const index = allData.findIndex(item => item.id === id);
-                if (index !== -1) {
-                    allData[index][field] = value;
-                }
-                
-                showSaveIndicator();
-                updateStats();
-                updateDashboard();
-                
-            } catch (error) {
            // Update site assignment for a device
         async function updateSiteAssignment(element, id) {
             const [newSiteId, newSiteName] = element.value.split('|');
@@ -2068,7 +1969,25 @@ async function createNewSite() {
                     break;
             }
         }
-        
+        // Toggle city expansion/collapse
+        function toggleCity(city) {
+            const icon = document.querySelector(`tr[data-city="${city}"] .expand-icon`);
+            const isCollapsed = icon.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                icon.classList.remove('collapsed');
+                icon.textContent = '▼';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.remove('hidden');
+                });
+            } else {
+                icon.classList.add('collapsed');
+                icon.textContent = '▶';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.add('hidden');
+                });
+            }
+        }
         function updateStats() {
             // Count unique sites using Set
             const uniqueSites = new Set(allData.map(item => item.siteid)).size;
