@@ -1166,7 +1166,7 @@
     <!-- Table View (Original) -->
     <div class="container hidden" id="mainContainer">
         <div class="header">
-            <div class="sync-status" id="syncStatus">[OK] Connected to Supabase</div>
+            <div class="sync-status" id="syncStatus">✅ Connected to Supabase</div>
             <div class="logo">resound</div>
             <h1>BeamSpeed Network Migration Tracker</h1>
             <div class="subtitle">Real-Time Multi-User Dashboard</div>
@@ -1174,18 +1174,18 @@
         </div>
         
         <div class="controls">
-            <button class="btn btn-primary" onclick="loadData()">[Refresh]</button>
+            <button class="btn btn-primary" onclick="loadData()">🔄 Refresh</button>
             <div class="button-group">
-                <button class="btn btn-success" onclick="addRow()">[Add Site]</button>
-                <button class="btn btn-secondary" onclick="showAddDeviceModal()">[Add Device]</button>
+                <button class="btn btn-success" onclick="addRow()">🏢 Add Site</button>
+                <button class="btn btn-secondary" onclick="showAddDeviceModal()">📡 Add Device</button>
             </div>
-            <button class="btn btn-warning" onclick="undoLastChange()">[Undo]</button>
-            <button class="btn btn-primary" onclick="exportToExcel()">[Export]</button>
-            <button class="btn btn-primary" onclick="sortTable('siteid')">[Sort by Site]</button>
-            <button class="btn btn-primary" onclick="sortTable('sitetype')">[Sort by Type]</button>
-            <button class="btn btn-dashboard" onclick="switchToDashboard()">[Dashboard]</button>
-            <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">[Logout]</button>
-            <input type="text" class="search-box" placeholder="Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
+            <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
+            <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
+            <button class="btn btn-primary" onclick="sortTable('siteid')">🏢 Sort by Site</button>
+            <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
+            <button class="btn btn-dashboard" onclick="switchToDashboard()">📈 Dashboard</button>
+            <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
+            <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
         </div>
         
         <div class="footer">
@@ -1394,7 +1394,7 @@
         
         // Load data from Supabase
         async function loadData() {
-            document.getElementById('syncStatus').textContent = '[Loading...]';
+            document.getElementById('syncStatus').textContent = '🔄 Loading...';
             document.getElementById('syncStatus').classList.add('syncing');
             
             try {
@@ -1411,12 +1411,12 @@
                 updateDashboard();
                 populateSiteDropdown();
                 
-                document.getElementById('syncStatus').textContent = '[OK] Connected to Supabase';
+                document.getElementById('syncStatus').textContent = '✅ Connected to Supabase';
                 document.getElementById('syncStatus').classList.remove('syncing');
                 
             } catch (error) {
                 console.error('Error loading data:', error);
-                document.getElementById('syncStatus').textContent = '[ERROR] Connection Failed';
+                document.getElementById('syncStatus').textContent = '❌ Connection Failed';
                 document.getElementById('syncStatus').classList.remove('syncing');
             }
         }
@@ -1588,7 +1588,7 @@
                     locationRow.setAttribute('data-city', city);
                     locationRow.innerHTML = `
                         <td colspan="20" style="padding-left: 30px;">
-                            [Location] ${location}
+                            📍 ${location}
                             <span class="location-stats">(${devices.length} device${devices.length > 1 ? 's' : ''})</span>
                         </td>
                     `;
