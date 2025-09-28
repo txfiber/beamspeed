@@ -1512,7 +1512,8 @@
             // Group data by city
             const groupedData = {};
             allData.forEach(item => {
-                const city = item.siteid ? item.siteid.split('-')[0] : 'UNASSIGNED';
+                const parts = item.siteid ? item.siteid.split('-') : ['UNASSIGNED'];
+                const city = parts[0] || 'UNASSIGNED';
                 if (!groupedData[city]) groupedData[city] = [];
                 groupedData[city].push(item);
             });
@@ -1532,10 +1533,11 @@
                 `;
                 tbody.appendChild(cityRow);
                 
-                // Location subheader
+                // Group by location within each city
                 const locations = {};
                 items.forEach(item => {
-                    const location = item.siteid || 'NO-LOCATION';
+                    const parts = item.siteid ? item.siteid.split('-') : ['', 'NO-LOCATION'];
+                    const location = parts[1] || 'NO-LOCATION';
                     if (!locations[location]) locations[location] = [];
                     locations[location].push(item);
                 });
@@ -1558,6 +1560,9 @@
                         row.className = 'device-row';
                         row.setAttribute('data-city', city);
                         row.setAttribute('data-id', item.id);
+                        
+                        // Create unique ID for password field
+                        const passwordId = `password-${item.id}`;
                         
                         row.innerHTML = `
                             <td><input class="editable" value="${item.siteid || ''}" onblur="updateField(this, ${item.id}, 'siteid')"></td>
@@ -1586,7 +1591,10 @@
                             </td>
                             <td><input class="editable" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
                             <td><input class="editable" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
-                            <td><input class="editable" type="password" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')"></td>
+                            <td style="position: relative;">
+                                <input class="editable" type="password" id="${passwordId}" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')" style="padding-right: 30px;">
+                                <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;">👁️</button>
+                            </td>
                             <td>
                                 <select class="editable" onchange="updateField(this, ${item.id}, 'status')" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
                                     <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
@@ -1624,6 +1632,18 @@
                     });
                 });
             });
+        }
+        
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            if (passwordField) {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                } else {
+                    passwordField.type = 'password';
+                }
+            }
         }
         
         // Toggle city visibility
