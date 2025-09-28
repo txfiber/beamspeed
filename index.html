@@ -13,12 +13,13 @@
         }
         
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
             min-height: 100vh;
         }
         
+        /* Login Styles */
         .login-container {
             position: fixed;
             top: 0;
@@ -105,6 +106,422 @@
             display: none !important;
         }
         
+        /* Dashboard View Styles */
+        .dashboard-view {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            min-height: 100vh;
+            margin: -20px;
+            padding: 0;
+            color: #e0e0e0;
+        }
+        
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dash-logo-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .dash-logo {
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .dash-title {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: 300;
+        }
+        
+        .dash-header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            color: #10b981;
+            font-size: 0.9em;
+        }
+        
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 4px;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .view-btn.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+        
+        .dashboard-content {
+            padding: 30px 40px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .kpi-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .kpi-label {
+            color: #9ca3af;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+        
+        .kpi-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border-radius: 6px;
+            font-size: 0.85em;
+        }
+        
+        .progress-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .migration-timeline {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+        }
+        
+        .section-title {
+            color: #fff;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .phase-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .phase-container::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 0;
+        }
+        
+        .phase {
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .phase-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .phase.active .phase-dot {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .phase.completed .phase-dot {
+            background: #10b981;
+            border-color: #10b981;
+        }
+        
+        .phase-label {
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+        
+        .phase-count {
+            color: #fff;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        
+        .priority-chart {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+        }
+        
+        .priority-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .priority-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .priority-label {
+            width: 60px;
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+        
+        .priority-bar-container {
+            flex: 1;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .priority-bar {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9em;
+            transition: width 1s ease;
+        }
+        
+        .priority-high-bar { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .priority-medium-bar { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .priority-low-bar { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        
+        .sites-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-tab {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-tab.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: rgba(99, 102, 241, 0.5);
+            color: #818cf8;
+        }
+        
+        .sites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .site-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .site-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+        
+        .site-name {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .site-id {
+            color: #6b7280;
+            font-size: 0.85em;
+            margin-top: 2px;
+        }
+        
+        .site-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        
+        .status-active-card {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .status-pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        
+        .status-inactive-card {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .site-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .site-metric {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .metric-label {
+            color: #6b7280;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        
+        .metric-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        
+        /* Table View Styles */
         .container {
             background: white;
             border-radius: 12px;
@@ -181,12 +598,6 @@
             animation: pulse 1.5s infinite;
         }
         
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-        
         .controls {
             background: #f8f9fa;
             padding: 20px;
@@ -232,6 +643,17 @@
             box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
         }
         
+        .btn-secondary {
+            background: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+        }
+        
         .btn-warning {
             background: #f59e0b;
             color: white;
@@ -253,6 +675,24 @@
         .btn-danger:hover {
             background: #dc2626;
             transform: scale(1.05);
+        }
+        
+        .btn-dashboard {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 5px;
+            border-left: 2px solid #dee2e6;
+            padding-left: 10px;
+            margin-left: 5px;
         }
         
         .search-box {
@@ -341,6 +781,11 @@
         
         tr:hover {
             background: #f8f9fa;
+        }
+        
+        .site-group {
+            background: #fafafa;
+            border-left: 3px solid #2563eb;
         }
         
         .editable {
@@ -445,6 +890,67 @@
             width: 80px;
         }
         
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal h3 {
+            color: #2563eb;
+            margin-bottom: 20px;
+        }
+        
+        .modal label {
+            display: block;
+            margin-bottom: 8px;
+            color: #495057;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+        
+        .modal select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+            justify-content: flex-end;
+        }
+        
+        .info-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f0f9ff;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -473,7 +979,135 @@
         </div>
     </div>
     
-    <!-- Main Application (hidden until login) -->
+    <!-- Dashboard View -->
+    <div class="dashboard-view hidden" id="dashboardView">
+        <div class="dashboard-header">
+            <div class="dash-logo-section">
+                <div class="dash-logo">resound</div>
+                <div class="dash-title">BeamSpeed Network Migration</div>
+            </div>
+            <div class="dash-header-actions">
+                <div class="sync-indicator">
+                    <div class="sync-dot"></div>
+                    <span>Live Sync Active</span>
+                </div>
+                <div class="view-toggle">
+                    <button class="view-btn active" id="dashViewBtn">Dashboard</button>
+                    <button class="view-btn" id="tableViewBtn" onclick="switchToTableView()">Table View</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-content">
+            <!-- KPI Cards -->
+            <div class="kpi-section">
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Sites</div>
+                    <div class="kpi-value" id="dashTotalSites">0</div>
+                    <span class="kpi-change" id="siteChange">Calculating...</span>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Devices</div>
+                    <div class="kpi-value" id="dashTotalDevices">0</div>
+                    <span class="kpi-change" id="deviceChange">Calculating...</span>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">Active Devices</div>
+                    <div class="kpi-value" id="dashActiveDevices">0</div>
+                    <span class="kpi-change" id="activeChange">Calculating...</span>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">Migration Progress</div>
+                    <div class="kpi-value" id="dashProgress">0%</div>
+                    <span class="kpi-change" id="progressChange">Calculating...</span>
+                </div>
+            </div>
+            
+            <!-- Progress Section -->
+            <div class="progress-section">
+                <div class="migration-timeline">
+                    <div class="section-title">
+                        Migration Timeline
+                        <span style="color: #6b7280; font-size: 0.9em;">Q4 2025 - Q1 2026</span>
+                    </div>
+                    
+                    <div class="phase-container">
+                        <div class="phase" id="phase1">
+                            <div class="phase-dot">1</div>
+                            <div class="phase-label">Phase 1</div>
+                            <div class="phase-count" id="phase1Count">0 sites</div>
+                        </div>
+                        <div class="phase" id="phase2">
+                            <div class="phase-dot">2</div>
+                            <div class="phase-label">Phase 2</div>
+                            <div class="phase-count" id="phase2Count">0 sites</div>
+                        </div>
+                        <div class="phase" id="phase3">
+                            <div class="phase-dot">3</div>
+                            <div class="phase-label">Phase 3</div>
+                            <div class="phase-count" id="phase3Count">0 sites</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); border-radius: 8px; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="color: #9ca3af;">Overall Progress</span>
+                            <span style="color: #fff; font-weight: bold;" id="overallProgressText">0%</span>
+                        </div>
+                        <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                            <div id="overallProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 1s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="priority-chart">
+                    <div class="section-title">Priority Distribution</div>
+                    <div class="priority-bars">
+                        <div class="priority-item">
+                            <span class="priority-label">High</span>
+                            <div class="priority-bar-container">
+                                <div class="priority-bar priority-high-bar" id="highPriorityBar" style="width: 0%;">0 sites</div>
+                            </div>
+                        </div>
+                        <div class="priority-item">
+                            <span class="priority-label">Medium</span>
+                            <div class="priority-bar-container">
+                                <div class="priority-bar priority-medium-bar" id="mediumPriorityBar" style="width: 0%;">0 sites</div>
+                            </div>
+                        </div>
+                        <div class="priority-item">
+                            <span class="priority-label">Low</span>
+                            <div class="priority-bar-container">
+                                <div class="priority-bar priority-low-bar" id="lowPriorityBar" style="width: 0%;">0 sites</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sites Grid -->
+            <div class="sites-section">
+                <div class="section-header">
+                    <div class="section-title">Site Overview</div>
+                    <div class="filter-tabs">
+                        <div class="filter-tab active" onclick="filterSites('all')">All Sites</div>
+                        <div class="filter-tab" onclick="filterSites('critical')">Critical</div>
+                        <div class="filter-tab" onclick="filterSites('pending')">Pending</div>
+                        <div class="filter-tab" onclick="filterSites('completed')">Completed</div>
+                    </div>
+                </div>
+                
+                <div class="sites-grid" id="sitesGrid">
+                    <!-- Sites will be dynamically populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table View (Original) -->
     <div class="container hidden" id="mainContainer">
         <div class="header">
             <div class="sync-status" id="syncStatus">✅ Connected to Supabase</div>
@@ -485,11 +1119,15 @@
         
         <div class="controls">
             <button class="btn btn-primary" onclick="loadData()">🔄 Refresh</button>
-            <button class="btn btn-success" onclick="addRow()">➕ Add Site</button>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="addRow()">🏢 Add Site</button>
+                <button class="btn btn-secondary" onclick="showAddDeviceModal()">📡 Add Device</button>
+            </div>
             <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
             <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
             <button class="btn btn-primary" onclick="sortTable('sitename')">🏢 Sort by Site Name</button>
             <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
+            <button class="btn btn-dashboard" onclick="switchToDashboard()">📈 Dashboard</button>
             <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
             <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
         </div>
@@ -499,6 +1137,10 @@
                 <div class="stat-card">
                     <div class="stat-value" id="totalSites">0</div>
                     <div class="stat-label">Total Sites</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalDevices">0</div>
+                    <div class="stat-label">Total Devices</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="activeDevices">0</div>
@@ -555,11 +1197,33 @@
         </div>
     </div>
     
+    <!-- Modal for Add Device -->
+    <div class="modal-overlay" id="deviceModal">
+        <div class="modal">
+            <h3>Add Device to Existing Site</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Select which site this device belongs to:</p>
+            
+            <label>Select Site:</label>
+            <select id="siteDropdown">
+                <option value="">Choose a site...</option>
+            </select>
+            
+            <div class="info-box">
+                💡 The new device will inherit all site information (address, access info, etc.) from the selected site. You'll only need to fill in device-specific details like Device Name, Type, and Management IP.
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="addDevice()">Continue</button>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Authentication Configuration
         const AUTH_CONFIG = {
             username: 'beamspeed',
-            password: 'Resound2026'  // Change these credentials!
+            password: 'Resound2026'
         };
         
         // Check authentication
@@ -568,7 +1232,7 @@
             if (isAuthenticated) {
                 document.getElementById('loginContainer').classList.add('hidden');
                 document.getElementById('mainContainer').classList.remove('hidden');
-                loadData(); // Start loading data
+                loadData();
             }
         }
         
@@ -579,18 +1243,15 @@
             const errorDiv = document.getElementById('loginError');
             
             if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
-                // Successful login
                 sessionStorage.setItem('authenticated', 'true');
                 document.getElementById('loginContainer').classList.add('hidden');
                 document.getElementById('mainContainer').classList.remove('hidden');
-                loadData(); // Start loading data
+                loadData();
             } else {
-                // Failed login
                 errorDiv.textContent = 'Invalid username or password';
                 errorDiv.classList.remove('hidden');
                 document.getElementById('loginPassword').value = '';
                 
-                // Hide error after 3 seconds
                 setTimeout(() => {
                     errorDiv.classList.add('hidden');
                 }, 3000);
@@ -614,6 +1275,23 @@
         const MAX_UNDO_HISTORY = 10;
         let sortDirection = 'asc';
         let passwordIdCounter = 1;
+        let currentView = 'table';
+        
+        // View switching functions
+        function switchToDashboard() {
+            currentView = 'dashboard';
+            document.getElementById('mainContainer').classList.add('hidden');
+            document.getElementById('dashboardView').classList.remove('hidden');
+            updateDashboard();
+        }
+        
+        function switchToTableView() {
+            currentView = 'table';
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById('mainContainer').classList.remove('hidden');
+            document.getElementById('dashViewBtn').classList.remove('active');
+            document.getElementById('tableViewBtn').classList.add('active');
+        }
         
         // Load data from Supabase
         async function loadData() {
@@ -631,6 +1309,8 @@
                 allData = data || [];
                 renderTable();
                 updateStats();
+                updateDashboard();
+                populateSiteDropdown();
                 
                 document.getElementById('syncStatus').textContent = '✅ Connected to Supabase';
                 document.getElementById('syncStatus').classList.remove('syncing');
@@ -642,7 +1322,118 @@
             }
         }
         
-        // Render table
+        // Populate site dropdown for Add Device modal
+        function populateSiteDropdown() {
+            const dropdown = document.getElementById('siteDropdown');
+            dropdown.innerHTML = '<option value="">Choose a site...</option>';
+            
+            // Get unique sites with device counts
+            const siteCounts = {};
+            allData.forEach(item => {
+                const key = `${item.siteid}|${item.sitename}`;
+                siteCounts[key] = (siteCounts[key] || 0) + 1;
+            });
+            
+            // Add options to dropdown
+            Object.entries(siteCounts).forEach(([key, count]) => {
+                const [siteid, sitename] = key.split('|');
+                const option = document.createElement('option');
+                option.value = siteid;
+                option.textContent = `${siteid} - ${sitename} (${count} device${count > 1 ? 's' : ''})`;
+                option.dataset.sitename = sitename;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        // Show Add Device modal
+        function showAddDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'flex';
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+        
+        // Add device to existing site
+        async function addDevice() {
+            const dropdown = document.getElementById('siteDropdown');
+            const siteid = dropdown.value;
+            
+            if (!siteid) {
+                alert('Please select a site');
+                return;
+            }
+            
+            // Find an existing row with this siteid to copy site information
+            const existingSite = allData.find(item => item.siteid === siteid);
+            
+            if (!existingSite) {
+                alert('Site not found');
+                return;
+            }
+            
+            // Create new device with copied site information
+            const newDevice = {
+                siteid: existingSite.siteid,
+                sitename: existingSite.sitename,
+                sitetype: existingSite.sitetype,
+                physicaladdress: existingSite.physicaladdress,
+                accessinfo: existingSite.accessinfo,
+                devicename: 'NEW-DEVICE',
+                devicetype: '',
+                managementip: '',
+                username: existingSite.username || '',
+                password: '',
+                status: 'Active',
+                circuitid: existingSite.circuitid || '',
+                ispprovider: existingSite.ispprovider || '',
+                bandwidth: existingSite.bandwidth || '',
+                customercount: existingSite.customercount || 0,
+                migrationphase: existingSite.migrationphase || 'Phase 1',
+                migrationdate: existingSite.migrationdate || null,
+                priority: existingSite.priority || 'Medium',
+                notes: ''
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert([newDevice])
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    allData.push(data[0]);
+                    renderTable();
+                    updateStats();
+                    updateDashboard();
+                    
+                    // Find the new row and scroll to it
+                    setTimeout(() => {
+                        const rows = document.querySelectorAll('#tableBody tr');
+                        const newRow = Array.from(rows).find(row => 
+                            row.getAttribute('data-id') === String(data[0].id)
+                        );
+                        if (newRow) {
+                            newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            newRow.style.animation = 'fadeIn 0.5s';
+                        }
+                    }, 100);
+                    
+                    addToUndoHistory('add', data[0].id, null, null, data[0]);
+                }
+                
+                closeModal();
+                
+            } catch (error) {
+                console.error('Add device error:', error);
+                alert('Failed to add device. Please try again.');
+            }
+        }
+        
+        // Render table with visual grouping
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -650,9 +1441,25 @@
             document.getElementById('migrationTable').style.display = 'table';
             document.getElementById('loadingMessage').style.display = 'none';
             
-            allData.forEach(item => {
+            // Sort data by siteid to group devices together
+            const sortedData = [...allData].sort((a, b) => {
+                if (a.siteid === b.siteid) {
+                    return (a.devicename || '').localeCompare(b.devicename || '');
+                }
+                return (a.siteid || '').localeCompare(b.siteid || '');
+            });
+            
+            let lastSiteId = null;
+            
+            sortedData.forEach(item => {
                 const row = tbody.insertRow();
                 row.setAttribute('data-id', item.id);
+                
+                // Add visual grouping for devices at same site
+                if (lastSiteId === item.siteid && lastSiteId !== null) {
+                    row.classList.add('site-group');
+                }
+                lastSiteId = item.siteid;
                 
                 // Site Information
                 row.insertCell().innerHTML = `<input type="text" class="editable" value="${item.siteid || ''}" data-field="siteid" onchange="updateCell(this, ${item.id})">`;
@@ -758,6 +1565,7 @@
                 
                 showSaveIndicator();
                 updateStats();
+                updateDashboard();
                 
             } catch (error) {
                 console.error('Update error:', error);
@@ -766,7 +1574,7 @@
             }
         }
         
-        // Add new row
+        // Add new row (site with first device)
         async function addRow() {
             const newRow = {
                 siteid: 'NEW-SITE',
@@ -774,7 +1582,7 @@
                 sitetype: 'Cabinet',
                 physicaladdress: '',
                 accessinfo: '',
-                devicename: '',
+                devicename: 'NEW-DEVICE',
                 devicetype: '',
                 managementip: '',
                 username: '',
@@ -802,6 +1610,8 @@
                     allData.push(data[0]);
                     renderTable();
                     updateStats();
+                    updateDashboard();
+                    populateSiteDropdown();
                     
                     // Scroll to new row
                     const rows = document.querySelectorAll('#tableBody tr');
@@ -836,6 +1646,8 @@
                     allData = allData.filter(item => item.id !== id);
                     renderTable();
                     updateStats();
+                    updateDashboard();
+                    populateSiteDropdown();
                     
                 } catch (error) {
                     console.error('Delete error:', error);
@@ -1033,7 +1845,12 @@
         }
         
         function updateStats() {
-            document.getElementById('totalSites').textContent = allData.length;
+            // Count unique sites using Set
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            document.getElementById('totalSites').textContent = uniqueSites;
+            
+            // Total devices is the total number of rows
+            document.getElementById('totalDevices').textContent = allData.length;
             
             let active = 0, pending = 0, completed = 0;
             
@@ -1046,6 +1863,204 @@
             document.getElementById('activeDevices').textContent = active;
             document.getElementById('pendingMigration').textContent = pending;
             document.getElementById('completed').textContent = completed;
+        }
+        
+        // Dashboard functions
+        function updateDashboard() {
+            if (!allData || allData.length === 0) return;
+            
+            // Calculate unique sites
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            const totalDevices = allData.length;
+            const activeDevices = allData.filter(item => item.status === 'Active').length;
+            const completedDevices = allData.filter(item => item.migrationphase === 'Complete').length;
+            const migrationProgress = Math.round((completedDevices / totalDevices) * 100);
+            
+            // Update KPIs with animation
+            animateValue(document.getElementById('dashTotalSites'), 0, uniqueSites, 1000);
+            animateValue(document.getElementById('dashTotalDevices'), 0, totalDevices, 1000);
+            animateValue(document.getElementById('dashActiveDevices'), 0, activeDevices, 1000);
+            document.getElementById('dashProgress').textContent = migrationProgress + '%';
+            
+            // Update progress bar
+            document.getElementById('overallProgressBar').style.width = migrationProgress + '%';
+            document.getElementById('overallProgressText').textContent = migrationProgress + '%';
+            
+            // Phase breakdown
+            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1').length;
+            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2').length;
+            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3').length;
+            const completeCount = allData.filter(item => item.migrationphase === 'Complete').length;
+            
+            document.getElementById('phase1Count').textContent = phase1Count + ' devices';
+            document.getElementById('phase2Count').textContent = phase2Count + ' devices';
+            document.getElementById('phase3Count').textContent = phase3Count + ' devices';
+            
+            // Update phase status
+            if (completeCount > 0 || phase2Count > 0 || phase3Count > 0) {
+                document.getElementById('phase1').classList.add('completed');
+            }
+            if (phase2Count > 0) {
+                document.getElementById('phase2').classList.add('active');
+            }
+            if (phase3Count > 0) {
+                document.getElementById('phase2').classList.remove('active');
+                document.getElementById('phase2').classList.add('completed');
+                document.getElementById('phase3').classList.add('active');
+            }
+            
+            // Priority distribution
+            const highPriority = allData.filter(item => item.priority === 'High').length;
+            const mediumPriority = allData.filter(item => item.priority === 'Medium').length;
+            const lowPriority = allData.filter(item => item.priority === 'Low').length;
+            const maxPriority = Math.max(highPriority, mediumPriority, lowPriority, 1);
+            
+            const highBar = document.getElementById('highPriorityBar');
+            const mediumBar = document.getElementById('mediumPriorityBar');
+            const lowBar = document.getElementById('lowPriorityBar');
+            
+            setTimeout(() => {
+                highBar.style.width = (highPriority / maxPriority * 100) + '%';
+                highBar.textContent = highPriority + ' devices';
+                mediumBar.style.width = (mediumPriority / maxPriority * 100) + '%';
+                mediumBar.textContent = mediumPriority + ' devices';
+                lowBar.style.width = (lowPriority / maxPriority * 100) + '%';
+                lowBar.textContent = lowPriority + ' devices';
+            }, 100);
+            
+            // Update site cards
+            updateSiteCards();
+        }
+        
+        function updateSiteCards() {
+            const sitesGrid = document.getElementById('sitesGrid');
+            if (!sitesGrid) return;
+            
+            sitesGrid.innerHTML = '';
+            
+            // Group devices by site
+            const siteGroups = {};
+            allData.forEach(item => {
+                const siteKey = item.siteid;
+                if (!siteGroups[siteKey]) {
+                    siteGroups[siteKey] = {
+                        siteid: item.siteid,
+                        sitename: item.sitename,
+                        sitetype: item.sitetype,
+                        devices: [],
+                        totalBandwidth: item.bandwidth || '',
+                        totalCustomers: 0,
+                        phases: new Set(),
+                        statuses: new Set()
+                    };
+                }
+                siteGroups[siteKey].devices.push(item);
+                siteGroups[siteKey].totalCustomers += parseInt(item.customercount) || 0;
+                siteGroups[siteKey].phases.add(item.migrationphase);
+                siteGroups[siteKey].statuses.add(item.status);
+            });
+            
+            // Create site cards
+            Object.values(siteGroups).forEach(site => {
+                const card = document.createElement('div');
+                card.className = 'site-card';
+                card.onclick = () => switchToTableView();
+                
+                // Determine overall site status
+                let siteStatus = 'INACTIVE';
+                let statusClass = 'status-inactive-card';
+                if (site.statuses.has('Active')) {
+                    siteStatus = 'ACTIVE';
+                    statusClass = 'status-active-card';
+                } else if (site.statuses.has('Shutdown')) {
+                    siteStatus = 'PENDING';
+                    statusClass = 'status-pending';
+                }
+                
+                // Get primary phase
+                let primaryPhase = 'Phase 1';
+                if (site.phases.has('Complete')) primaryPhase = 'Complete';
+                else if (site.phases.has('Phase 3')) primaryPhase = 'Phase 3';
+                else if (site.phases.has('Phase 2')) primaryPhase = 'Phase 2';
+                
+                card.innerHTML = `
+                    <div class="site-header">
+                        <div>
+                            <div class="site-name">${site.sitename || 'Unnamed Site'}</div>
+                            <div class="site-id">${site.siteid}</div>
+                        </div>
+                        <div class="site-status ${statusClass}">${siteStatus}</div>
+                    </div>
+                    <div class="site-metrics">
+                        <div class="site-metric">
+                            <span class="metric-label">Devices</span>
+                            <span class="metric-value">${site.devices.length}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Bandwidth</span>
+                            <span class="metric-value">${site.totalBandwidth || 'N/A'}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Customers</span>
+                            <span class="metric-value">${site.totalCustomers}</span>
+                        </div>
+                        <div class="site-metric">
+                            <span class="metric-label">Phase</span>
+                            <span class="metric-value">${primaryPhase}</span>
+                        </div>
+                    </div>
+                `;
+                
+                sitesGrid.appendChild(card);
+            });
+        }
+        
+        function filterSites(filter) {
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Filter site cards based on selection
+            const cards = document.querySelectorAll('.site-card');
+            cards.forEach(card => {
+                const status = card.querySelector('.site-status').textContent;
+                const phase = card.querySelector('.metric-value:last-child').textContent;
+                
+                let show = false;
+                switch(filter) {
+                    case 'all':
+                        show = true;
+                        break;
+                    case 'critical':
+                        show = status === 'ACTIVE' && phase !== 'Complete';
+                        break;
+                    case 'pending':
+                        show = status === 'PENDING' || phase.includes('Phase');
+                        break;
+                    case 'completed':
+                        show = phase === 'Complete';
+                        break;
+                }
+                
+                card.style.display = show ? 'block' : 'none';
+            });
+        }
+        
+        function animateValue(element, start, end, duration) {
+            if (!element) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const value = Math.floor(progress * (end - start) + start);
+                element.textContent = value;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
         }
         
         function showSaveIndicator() {
@@ -1087,8 +2102,9 @@
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
-            checkAuth(); // Check if user is authenticated first
+            checkAuth();
         });
     </script>
 </body>
 </html>
+                
