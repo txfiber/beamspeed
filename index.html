@@ -1417,7 +1417,7 @@
                 if (!siteGroups[siteKey]) {
                     siteGroups[siteKey] = {
                         siteid: item.siteid,
-                        siteaddress: item.siteaddress,
+                        physicaladdress: item.physicaladdress,  // Changed from siteaddress
                         sitetype: item.sitetype,
                         devices: [],
                         bandwidth: item.bandwidth || '',
@@ -1459,7 +1459,7 @@
                     <div class="site-header-card">
                         <div>
                             <div class="site-name">${site.siteid || 'Unnamed Site'}</div>
-                            <div class="site-id">${site.siteaddress || 'No Address'}</div>
+                            <div class="site-id">${site.physicaladdress || 'No Address'}</div>
                         </div>
                         <div class="site-status ${statusClass}">${siteStatus}</div>
                     </div>
@@ -1572,7 +1572,7 @@
                     
                     row.innerHTML = `
                         <td><input class="editable" value="${item.siteid || ''}" readonly style="background: #f5f5f5; cursor: not-allowed;" title="Site ID cannot be changed"></td>
-                        <td><input class="editable" value="${item.siteaddress || ''}" onblur="updateField(this, ${item.id}, 'siteaddress')" placeholder="Enter full address"></td>
+                        <td><input class="editable" value="${item.physicaladdress || ''}" onblur="updateField(this, ${item.id}, 'physicaladdress')" placeholder="Enter full address"></td>
                         <td>
                             <select class="editable" onchange="updateField(this, ${item.id}, 'sitetype')">
                                 <option value="">Select</option>
@@ -1794,8 +1794,9 @@
             
             const newSite = {
                 siteid: siteId,
-                siteaddress: siteAddress,
+                sitename: siteId,  // Using siteId as sitename
                 sitetype: siteType,
+                physicaladdress: siteAddress,  // Changed from siteaddress to physicaladdress
                 accessinfo: '',
                 devicename: `${siteId}-DEVICE-01`,
                 devicetype: '',
@@ -1883,8 +1884,9 @@
             
             const newDevice = {
                 siteid: existingSite.siteid,
-                siteaddress: existingSite.siteaddress || '',
+                sitename: existingSite.sitename || '',
                 sitetype: existingSite.sitetype || '',
+                physicaladdress: existingSite.physicaladdress || '',  // Changed from siteaddress
                 accessinfo: existingSite.accessinfo || '',
                 devicename: `${siteid}-DEVICE-${deviceNumber}`,
                 devicetype: '',
@@ -1950,12 +1952,12 @@
         
         function exportToExcel() {
             let csvContent = "data:text/csv;charset=utf-8,";
-            const headers = ['Site ID','Site Address','Site Type','Access Info','Device Name','Device Type','Management IP','Username','Status','Circuit ID','ISP Provider','Bandwidth','Customer Count','Migration Phase','Migration Date','Priority','Notes'];
+            const headers = ['Site ID','Physical Address','Site Type','Access Info','Device Name','Device Type','Management IP','Username','Status','Circuit ID','ISP Provider','Bandwidth','Customer Count','Migration Phase','Migration Date','Priority','Notes'];
             csvContent += headers.join(',') + '\n';
             
             allData.forEach(item => {
                 const row = [
-                    item.siteid, item.siteaddress, item.sitetype, 
+                    item.siteid, item.physicaladdress, item.sitetype, 
                     item.accessinfo, item.devicename, item.devicetype, item.managementip,
                     item.username, item.status, item.circuitid, item.ispprovider,
                     item.bandwidth, item.customercount, item.migrationphase,
