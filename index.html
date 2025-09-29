@@ -492,6 +492,7 @@
                 <option value="Firewall">Firewall</option>
                 <option value="Server">Server</option>
                 <option value="AP">Access Point</option>
+                <option value="BackHaul">BackHaul</option>
                 <option value="Other">Other</option>
             </select>
             
@@ -724,15 +725,23 @@
                         grouped[cityKey].locations[locationKey] = {
                             devices: [],
                             locationId: null,
-                            address: item.address || '',
-                            sitetype: item.sitetype || ''
+                            address: '',
+                            sitetype: ''
                         };
                     }
-                    // Track location-level record ID
+                    // Track location-level record ID and data
                     if (!item.devicename) {
                         grouped[cityKey].locations[locationKey].locationId = item.id;
-                        grouped[cityKey].locations[locationKey].address = item.address || '';
+                        grouped[cityKey].locations[locationKey].address = item.physicaladdress || item.address || '';
                         grouped[cityKey].locations[locationKey].sitetype = item.sitetype || '';
+                    } else {
+                        // Also update from device records if location record doesn't have address
+                        if (!grouped[cityKey].locations[locationKey].address) {
+                            grouped[cityKey].locations[locationKey].address = item.physicaladdress || item.address || '';
+                        }
+                        if (!grouped[cityKey].locations[locationKey].sitetype) {
+                            grouped[cityKey].locations[locationKey].sitetype = item.sitetype || '';
+                        }
                     }
                     if (item.devicename) {
                         grouped[cityKey].locations[locationKey].devices.push(item);
