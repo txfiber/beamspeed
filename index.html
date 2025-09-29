@@ -1198,13 +1198,13 @@
     <div class="modal-overlay" id="siteModal">
         <div class="modal">
             <h3>Create New Site</h3>
-            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site details:</p>
+            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location:</p>
             
-            <label>City/Region:</label>
+            <label>City:</label>
             <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX, YUMA" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
             
-            <label>Site Address:</label>
-            <input type="text" id="newSiteAddress" placeholder="e.g., 123 Tower Road, Phoenix, AZ 85001" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            <label>State (2-letter code):</label>
+            <input type="text" id="newState" placeholder="e.g., TX, AZ, CA" maxlength="2" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
             
             <label>Site Type:</label>
             <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
@@ -1215,7 +1215,7 @@
             </select>
             
             <div class="info-box">
-                💡 This will create site: <strong id="sitePreview">CITY</strong>
+                💡 This will create site: <strong id="sitePreview">CITY, ST</strong>
             </div>
             
             <div class="modal-actions">
@@ -1763,42 +1763,52 @@
         function closeSiteModal() {
             document.getElementById('siteModal').style.display = 'none';
             document.getElementById('newCity').value = '';
-            document.getElementById('newSiteAddress').value = '';
+            document.getElementById('newState').value = '';
         }
         
         function updateSitePreview() {
             const city = document.getElementById('newCity').value.toUpperCase() || 'CITY';
-            document.getElementById('sitePreview').textContent = city;
+            const state = document.getElementById('newState').value.toUpperCase() || 'ST';
+            document.getElementById('sitePreview').textContent = `${city}, ${state}`;
         }
         
         // Add event listeners for site preview
         document.addEventListener('DOMContentLoaded', function() {
             const cityElement = document.getElementById('newCity');
+            const stateElement = document.getElementById('newState');
             if (cityElement) {
                 cityElement.addEventListener('input', updateSitePreview);
+            }
+            if (stateElement) {
+                stateElement.addEventListener('input', updateSitePreview);
             }
             checkAuth();
         });
         
         async function createNewSite() {
             const city = document.getElementById('newCity').value.trim().toUpperCase();
-            const siteAddress = document.getElementById('newSiteAddress').value.trim();
+            const state = document.getElementById('newState').value.trim().toUpperCase();
             const siteType = document.getElementById('newSiteType').value;
             
-            if (!city) {
-                alert('Please enter a City/Region');
+            if (!city || !state) {
+                alert('Please enter both City and State');
                 return;
             }
             
-            const siteId = city;
+            if (state.length !== 2) {
+                alert('Please enter a 2-letter state code (e.g., AZ, TX, CA)');
+                return;
+            }
+            
+            const siteId = `${city}, ${state}`;
             
             const newSite = {
                 siteid: siteId,
-                sitename: siteId,  // Using siteId as sitename
+                sitename: city,  // Just the city name
                 sitetype: siteType,
-                physicaladdress: siteAddress,  // Changed from siteaddress to physicaladdress
+                physicaladdress: '',  // Leave empty - to be filled per device
                 accessinfo: '',
-                devicename: `${siteId}-DEVICE-01`,
+                devicename: `${city}-DEVICE-01`,  // Use city for device naming
                 devicetype: '',
                 managementip: '',
                 username: '',
@@ -1878,17 +1888,20 @@
                 return;
             }
             
+            // Extract city name from siteid (e.g., "YUMA, AZ" -> "YUMA")
+            const cityName = siteid.split(',')[0].trim();
+            
             // Count existing devices for this site to generate a unique name
             const deviceCount = allData.filter(item => item.siteid === siteid).length;
             const deviceNumber = (deviceCount + 1).toString().padStart(2, '0');
             
             const newDevice = {
                 siteid: existingSite.siteid,
-                sitename: existingSite.sitename || '',
+                sitename: existingSite.sitename || cityName,
                 sitetype: existingSite.sitetype || '',
-                physicaladdress: existingSite.physicaladdress || '',  // Changed from siteaddress
+                physicaladdress: '',  // Leave empty to be filled per device
                 accessinfo: existingSite.accessinfo || '',
-                devicename: `${siteid}-DEVICE-${deviceNumber}`,
+                devicename: `${cityName}-DEVICE-${deviceNumber}`,
                 devicetype: '',
                 managementip: '',
                 username: '',
