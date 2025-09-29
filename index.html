@@ -1177,23 +1177,42 @@
             }
             
             try {
-                const { error } = await supabaseClient
+                // Create a location row (has siteid and sitename, but no devicename)
+                const { data, error } = await supabaseClient
                     .from('migration_tracker')
                     .insert({
                         siteid: city,
                         sitename: locationName,
-                        address: address,
-                        sitetype: sitetype
+                        address: address || '',
+                        sitetype: sitetype || 'Office',
+                        // Don't include devicename - this makes it a location row
+                        status: null,
+                        devicetype: null,
+                        managementip: null,
+                        username: null,
+                        password: null,
+                        circuitid: null,
+                        ispprovider: null,
+                        bandwidth: null,
+                        customercount: null,
+                        migrationphase: null,
+                        migrationdate: null,
+                        priority: null,
+                        notes: null
                     });
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
                 
                 closeLocationModal();
                 loadData();
+                alert('Location added successfully!');
                 
             } catch (error) {
                 console.error('Error creating location:', error);
-                alert('Failed to create location. Please try again.');
+                alert('Failed to create location. Error: ' + (error.message || 'Please try again.'));
             }
         }
         
