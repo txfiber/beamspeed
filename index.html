@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeamSpeed Network Migration Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -605,15 +606,55 @@
             gap: 5px;
         }
         
-        .btn-primary {
+        .btn-export {
             background: #2563eb;
             color: white;
+            position: relative;
         }
         
-        .btn-primary:hover {
+        .btn-export:hover {
             background: #1e40af;
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(37, 99, 235, 0.4);
+        }
+        
+        .export-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+            z-index: 100;
+            margin-top: 5px;
+            min-width: 150px;
+        }
+        
+        .export-dropdown.show {
+            display: block;
+        }
+        
+        .export-option {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .export-option:hover {
+            background: #f3f4f6;
+        }
+        
+        .export-option:first-child {
+            border-radius: 6px 6px 0 0;
+        }
+        
+        .export-option:last-child {
+            border-radius: 0 0 6px 6px;
         }
         
         .btn-success {
@@ -1100,7 +1141,17 @@
             <button class="btn btn-success" onclick="addRow()">🏢 Add Site</button>
             <button class="btn btn-secondary" onclick="showAddDeviceModal()">📡 Add Device</button>
             <button class="btn btn-warning" onclick="undoLastChange()">↩️ Undo</button>
-            <button class="btn btn-primary" onclick="exportToExcel()">📊 Export to Excel</button>
+            <div style="position: relative; display: inline-block;">
+                <button class="btn btn-export" onclick="toggleExportDropdown(event)">📊 Export ▼</button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <div class="export-option" onclick="exportToExcel()">
+                        📗 Export to Excel
+                    </div>
+                    <div class="export-option" onclick="exportToPDF()">
+                        📕 Export to PDF
+                    </div>
+                </div>
+            </div>
             <button class="btn btn-primary" onclick="sortTable('siteid')">🏢 Sort by Site</button>
             <button class="btn btn-primary" onclick="sortTable('sitetype')">🔍 Sort by Site Type</button>
             <button class="btn btn-dashboard" onclick="toggleView()">📈 Dashboard</button>
@@ -1963,7 +2014,24 @@
             alert('Undo functionality coming soon');
         }
         
+        function toggleExportDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.toggle('show');
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function() {
+            const dropdown = document.getElementById('exportDropdown');
+            if (dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+            }
+        });
+        
         function exportToExcel() {
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.remove('show');
+            
             let csvContent = "data:text/csv;charset=utf-8,";
             const headers = ['Site ID','Physical Address','Site Type','Access Info','Device Name','Device Type','Management IP','Username','Status','Circuit ID','ISP Provider','Bandwidth','Customer Count','Migration Phase','Migration Date','Priority','Notes'];
             csvContent += headers.join(',') + '\n';
@@ -1986,6 +2054,252 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+        
+        function exportToPDF() {
+            const dropdown = document.getElementById('exportDropdown');
+            dropdown.classList.remove('show');
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Calculate metrics
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            const totalDevices = allData.length;
+            const activeDevices = allData.filter(item => item.status === 'Active').length;
+            const completedDevices = allData.filter(item => item.migrationphase === 'Complete').length;
+            const migrationProgress = totalDevices > 0 ? Math.round((completedDevices / totalDevices) * 100) : 0;
+            
+            // Phase counts
+            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1').length;
+            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2').length;
+            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3').length;
+            
+            // Priority counts
+            const highPriority = allData.filter(item => item.priority === 'High').length;
+            const mediumPriority = allData.filter(item => item.priority === 'Medium').length;
+            const lowPriority = allData.filter(item => item.priority === 'Low').length;
+            
+            // Group devices by site
+            const siteGroups = {};
+            allData.forEach(item => {
+                const siteKey = item.siteid || 'UNASSIGNED';
+                if (!siteGroups[siteKey]) {
+                    siteGroups[siteKey] = {
+                        devices: [],
+                        sitetype: item.sitetype,
+                        totalCustomers: 0
+                    };
+                }
+                siteGroups[siteKey].devices.push(item);
+                siteGroups[siteKey].totalCustomers += parseInt(item.customercount) || 0;
+            });
+            
+            // Add gradient header
+            doc.setFillColor(102, 126, 234);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setFillColor(118, 75, 162);
+            doc.rect(0, 0, 210, 40, 'F');
+            
+            // Add title and logo
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont(undefined, 'bold');
+            doc.text('BeamSpeed Network Migration Report', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+            
+            // Add resound logo watermark
+            doc.setTextColor(255, 255, 255, 0.2);
+            doc.setFontSize(40);
+            doc.setFont(undefined, 'bold');
+            doc.text('resound', 180, 25, { align: 'right' });
+            
+            // KPI Section
+            let yPos = 55;
+            doc.setTextColor(37, 99, 235);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Key Performance Indicators', 15, yPos);
+            
+            // KPI Cards
+            yPos += 10;
+            const kpiData = [
+                { label: 'Total Sites', value: uniqueSites },
+                { label: 'Total Devices', value: totalDevices },
+                { label: 'Active Devices', value: activeDevices },
+                { label: 'Migration Progress', value: `${migrationProgress}%` }
+            ];
+            
+            let xPos = 15;
+            kpiData.forEach((kpi, index) => {
+                // Card background
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(xPos, yPos, 42, 25, 3, 3, 'F');
+                
+                // Label
+                doc.setTextColor(107, 114, 128);
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                doc.text(kpi.label, xPos + 21, yPos + 8, { align: 'center' });
+                
+                // Value
+                doc.setTextColor(37, 99, 235);
+                doc.setFontSize(18);
+                doc.setFont(undefined, 'bold');
+                doc.text(String(kpi.value), xPos + 21, yPos + 18, { align: 'center' });
+                
+                xPos += 47;
+            });
+            
+            // Migration Timeline
+            yPos += 40;
+            doc.setTextColor(37, 99, 235);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Migration Timeline', 15, yPos);
+            
+            yPos += 10;
+            doc.setTextColor(75, 85, 99);
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Phase 1: ${phase1Count} devices`, 15, yPos);
+            doc.text(`Phase 2: ${phase2Count} devices`, 75, yPos);
+            doc.text(`Phase 3: ${phase3Count} devices`, 135, yPos);
+            
+            // Priority Distribution
+            yPos += 20;
+            doc.setTextColor(37, 99, 235);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Priority Distribution', 15, yPos);
+            
+            yPos += 10;
+            // High Priority Bar
+            doc.setFillColor(239, 68, 68);
+            doc.rect(15, yPos, (highPriority / totalDevices) * 100 || 1, 8, 'F');
+            doc.setTextColor(75, 85, 99);
+            doc.setFontSize(10);
+            doc.text(`High: ${highPriority} devices`, 120, yPos + 6);
+            
+            yPos += 12;
+            // Medium Priority Bar
+            doc.setFillColor(245, 158, 11);
+            doc.rect(15, yPos, (mediumPriority / totalDevices) * 100 || 1, 8, 'F');
+            doc.text(`Medium: ${mediumPriority} devices`, 120, yPos + 6);
+            
+            yPos += 12;
+            // Low Priority Bar
+            doc.setFillColor(59, 130, 246);
+            doc.rect(15, yPos, (lowPriority / totalDevices) * 100 || 1, 8, 'F');
+            doc.text(`Low: ${lowPriority} devices`, 120, yPos + 6);
+            
+            // Site Overview
+            yPos += 25;
+            doc.setTextColor(37, 99, 235);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Site Overview', 15, yPos);
+            
+            yPos += 10;
+            Object.entries(siteGroups).forEach(([siteName, siteData]) => {
+                if (yPos > 250) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                // Site card
+                doc.setFillColor(245, 247, 250);
+                doc.roundedRect(15, yPos, 180, 20, 3, 3, 'F');
+                
+                // Site name
+                doc.setTextColor(37, 99, 235);
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text(siteName, 20, yPos + 8);
+                
+                // Site details
+                doc.setTextColor(75, 85, 99);
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(`${siteData.devices.length} devices | Type: ${siteData.sitetype || 'N/A'} | ${siteData.totalCustomers} customers`, 20, yPos + 15);
+                
+                yPos += 25;
+            });
+            
+            // Device Details Table (new page)
+            doc.addPage();
+            doc.setTextColor(37, 99, 235);
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('Device Details', 15, 20);
+            
+            // Table headers
+            yPos = 35;
+            doc.setFontSize(8);
+            doc.setTextColor(75, 85, 99);
+            doc.setFont(undefined, 'bold');
+            doc.text('Site', 15, yPos);
+            doc.text('Device', 45, yPos);
+            doc.text('Type', 75, yPos);
+            doc.text('IP', 95, yPos);
+            doc.text('Status', 125, yPos);
+            doc.text('Phase', 145, yPos);
+            doc.text('Priority', 170, yPos);
+            
+            // Table data
+            yPos += 5;
+            doc.setFont(undefined, 'normal');
+            allData.forEach(device => {
+                if (yPos > 270) {
+                    doc.addPage();
+                    yPos = 20;
+                    // Repeat headers
+                    doc.setFont(undefined, 'bold');
+                    doc.text('Site', 15, yPos);
+                    doc.text('Device', 45, yPos);
+                    doc.text('Type', 75, yPos);
+                    doc.text('IP', 95, yPos);
+                    doc.text('Status', 125, yPos);
+                    doc.text('Phase', 145, yPos);
+                    doc.text('Priority', 170, yPos);
+                    yPos += 5;
+                    doc.setFont(undefined, 'normal');
+                }
+                
+                doc.setFontSize(7);
+                doc.text(device.siteid || '', 15, yPos);
+                doc.text(device.devicename || '', 45, yPos);
+                doc.text(device.devicetype || '', 75, yPos);
+                doc.text(device.managementip || '', 95, yPos);
+                
+                // Color code status
+                if (device.status === 'Active') doc.setTextColor(16, 185, 129);
+                else if (device.status === 'Shutdown') doc.setTextColor(245, 158, 11);
+                else doc.setTextColor(239, 68, 68);
+                doc.text(device.status || '', 125, yPos);
+                
+                doc.setTextColor(75, 85, 99);
+                doc.text(device.migrationphase || '', 145, yPos);
+                
+                // Color code priority
+                if (device.priority === 'High') doc.setTextColor(239, 68, 68);
+                else if (device.priority === 'Medium') doc.setTextColor(245, 158, 11);
+                else doc.setTextColor(59, 130, 246);
+                doc.text(device.priority || '', 170, yPos);
+                
+                doc.setTextColor(75, 85, 99);
+                yPos += 6;
+            });
+            
+            // Footer on last page
+            doc.setTextColor(156, 163, 175);
+            doc.setFontSize(8);
+            doc.text('BeamSpeed Network Migration Tracker - Confidential', 105, 285, { align: 'center' });
+            
+            // Save the PDF
+            doc.save('beamspeed_migration_report.pdf');
         }
         
         async function sortTable(column) {
