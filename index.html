@@ -696,6 +696,149 @@
             `;
         }
         
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('migrationTable').style.display = 'table';
+            
+            const grouped = {};
+            
+            allData.forEach(item => {
+                const cityKey = item.siteid || 'UNASSIGNED';
+                if (!grouped[cityKey]) {
+                    grouped[cityKey] = { 
+                        locations: {},
+                        cityId: null 
+                    };
+                }
+                
+                // Track city-level record ID
+                if (!item.sitename && !item.devicename) {
+                    grouped[cityKey].cityId = item.id;
+                }
+                
+                if (item.sitename) {
+                    const locationKey = item.sitename;
+                    if (!grouped[cityKey].locations[locationKey]) {
+                        grouped[cityKey].locations[locationKey] = {
+                            devices: [],
+                            locationId: null,
+                            address: item.address || '',
+                            sitetype: item.sitetype || ''
+                        };
+                    }
+                    // Track location-level record ID
+                    if (!item.devicename) {
+                        grouped[cityKey].locations[locationKey].locationId = item.id;
+                        grouped[cityKey].locations[locationKey].address = item.address || '';
+                        grouped[cityKey].locations[locationKey].sitetype = item.sitetype || '';
+                    }
+                    if (item.devicename) {
+                        grouped[cityKey].locations[locationKey].devices.push(item);
+                    }
+                }
+            });
+            
+            Object.entries(grouped).forEach(([city, cityData]) => {
+                const cityRow = document.createElement('tr');
+                cityRow.className = 'city-row';
+                cityRow.innerHTML = `
+                    <td colspan="18">
+                        <span class="expand-icon">▼</span> ${city}
+                    </td>
+                    <td>
+                        ${cityData.cityId ? `<button class="btn btn-danger" onclick="deleteCity(${cityData.cityId}, '${city.replace(/'/g, "\\'")}')">Delete</button>` : ''}
+                    </td>
+                `;
+                cityRow.onclick = (e) => {
+                    if (!e.target.classList.contains('btn-danger')) {
+                        toggleCityCollapse(city);
+                    }
+                };
+                tbody.appendChild(cityRow);
+                
+                Object.entries(cityData.locations).forEach(([location, locData]) => {
+                    const locationRow = document.createElement('tr');
+                    locationRow.className = 'location-row';
+                    locationRow.dataset.city = city;
+                    
+                    locationRow.innerHTML = `
+                        <td></td>
+                        <td>
+                            <span class="expand-icon">▼</span> ${location}
+                        </td>
+                        <td>${locData.address}</td>
+                        <td>${locData.sitetype}</td>
+                        <td colspan="14"></td>
+                        <td>
+                            ${locData.locationId ? `<button class="btn btn-danger" onclick="deleteLocation(${locData.locationId}, '${location.replace(/'/g, "\\'")}')">Delete</button>` : ''}
+                        </td>
+                    `;
+                    locationRow.onclick = (e) => {
+                        if (!e.target.classList.contains('btn-danger')) {
+                            toggleLocationCollapse(city, location);
+                        }
+                    };
+                    tbody.appendChild(locationRow);
+                    
+                    locData.devices.forEach(device => {
+                        const deviceRow = document.createElement('tr');
+                        deviceRow.className = 'device-row';
+                        deviceRow.dataset.city = city;
+                        deviceRow.dataset.location = location;
+                        deviceRow.innerHTML = createDeviceRowHTML(device);
+                        tbody.appendChild(deviceRow);
+                    });
+                });
+            });
+        }
+        
+        async function deleteCity(id, cityName) {
+            if (!confirm(`Are you sure you want to delete the city "${cityName}" and all its locations and devices?`)) return;
+            
+            try {
+                // Delete all records with this siteid
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .delete()
+                    .eq('siteid', cityName);
+                
+                if (error) throw error;
+                
+                loadData();
+                
+            } catch (error) {
+                console.error('Error deleting city:', error);
+                alert('Failed to delete city. Please try again.');
+            }
+        }
+        
+        async function deleteLocation(id, locationName) {
+            if (!confirm(`Are you sure you want to delete the location "${locationName}" and all its devices?`)) return;
+            
+            try {
+                // Find and delete all records with this sitename
+                const locationRecords = allData.filter(item => item.sitename === locationName);
+                const ids = locationRecords.map(item => item.id);
+                
+                if (ids.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .in('id', ids);
+                    
+                    if (error) throw error;
+                }
+                
+                loadData();
+                
+            } catch (error) {
+                console.error('Error deleting location:', error);
+                alert('Failed to delete location. Please try again.');
+            }
+        }
+        
         function toggleCityCollapse(city) {
             const locationRows = document.querySelectorAll(`.location-row[data-city="${city}"]`);
             const deviceRows = document.querySelectorAll(`.device-row[data-city="${city}"]`);
@@ -1168,7 +1311,7 @@
         async function createNewLocation() {
             const city = document.getElementById('cityDropdownForLocation').value;
             const locationName = document.getElementById('locationName').value;
-            const address = document.getElementById('locationAddress').value;
+            const locationAddress = document.getElementById('locationAddress').value;
             const sitetype = document.getElementById('newLocationType').value;
             
             if (!city || !locationName) {
@@ -1177,29 +1320,30 @@
             }
             
             try {
-                // Create a location row (has siteid and sitename, but no devicename)
+                // Create a location row - only include fields that exist in the database
+                const insertData = {
+                    siteid: city,
+                    sitename: locationName,
+                    sitetype: sitetype || 'Office'
+                };
+                
+                // Try to include address if the field exists
+                // First, let's check what columns exist by doing a test query
+                const { data: testData, error: testError } = await supabaseClient
+                    .from('migration_tracker')
+                    .select('*')
+                    .limit(1);
+                
+                if (!testError && testData && testData.length > 0) {
+                    // Check if address column exists
+                    if ('address' in testData[0]) {
+                        insertData.address = locationAddress || '';
+                    }
+                }
+                
                 const { data, error } = await supabaseClient
                     .from('migration_tracker')
-                    .insert({
-                        siteid: city,
-                        sitename: locationName,
-                        address: address || '',
-                        sitetype: sitetype || 'Office',
-                        // Don't include devicename - this makes it a location row
-                        status: null,
-                        devicetype: null,
-                        managementip: null,
-                        username: null,
-                        password: null,
-                        circuitid: null,
-                        ispprovider: null,
-                        bandwidth: null,
-                        customercount: null,
-                        migrationphase: null,
-                        migrationdate: null,
-                        priority: null,
-                        notes: null
-                    });
+                    .insert(insertData);
                 
                 if (error) {
                     console.error('Supabase error:', error);
