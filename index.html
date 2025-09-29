@@ -714,6 +714,20 @@
             transition: background 0.3s ease;
         }
         
+        /* Sticky first column */
+        th:first-child,
+        td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 5;
+            background: white;
+        }
+        
+        .city-row td:first-child,
+        .location-row td:first-child {
+            background: inherit;
+        }
+        
         .category-header {
             background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
@@ -729,8 +743,28 @@
             position: relative;
         }
         
+        /* Enhanced row hover effects */
         tr:hover {
-            background: #f8f9fa;
+            background: #f0f4ff;
+            transition: background 0.2s ease;
+        }
+        
+        tr:hover td {
+            border-bottom-color: #c7d2fe;
+        }
+        
+        /* Alternating row colors for device rows */
+        .device-row:nth-child(even) {
+            background: #fafafa;
+        }
+        
+        .device-row:nth-child(odd) {
+            background: white;
+        }
+        
+        .device-row:hover {
+            background: #e0e7ff !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         /* Collapsible Styles */
@@ -764,6 +798,7 @@
         .location-row {
             background: #f0f4f8;
             font-weight: 600;
+            border-left: 4px solid #6366f1;
         }
         
         .location-row.hidden {
@@ -772,6 +807,8 @@
         
         .device-row {
             background: white;
+            border-left: 4px solid transparent;
+            transition: all 0.2s ease;
         }
         
         .device-row.hidden {
@@ -797,6 +834,15 @@
             background: white;
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        /* Better visual spacing for grouped sections */
+        .city-row + .location-row {
+            border-top: none;
+        }
+        
+        .location-row + .device-row {
+            padding-left: 20px;
         }
         
         .footer {
@@ -875,7 +921,8 @@
             margin-top: 15px;
         }
         
-        .modal select {
+        .modal select,
+        .modal input[type="text"] {
             width: 100%;
             padding: 10px;
             border: 2px solid #e5e7eb;
@@ -1176,6 +1223,9 @@
             
             <label>Location ID:</label>
             <input type="text" id="locationId" placeholder="e.g., TWR01, DC01, CAB03" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
+            
+            <label>Site Address:</label>
+            <input type="text" id="newSiteAddress" placeholder="e.g., 123 Tower Road, Phoenix, AZ 85001" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
             
             <label>Site Type:</label>
             <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
@@ -1547,7 +1597,7 @@
                     locationRow.className = 'location-row';
                     locationRow.setAttribute('data-city', city);
                     locationRow.innerHTML = `
-                        <td colspan="19" style="padding-left: 30px; background: #f0f4f8;">
+                        <td colspan="19" style="padding-left: 30px;">
                             📍 ${location} <span style="opacity: 0.7;">(${devices.length} device${devices.length > 1 ? 's' : ''})</span>
                         </td>
                     `;
@@ -1755,6 +1805,7 @@
             document.getElementById('siteModal').style.display = 'none';
             document.getElementById('newCity').value = '';
             document.getElementById('locationId').value = '';
+            document.getElementById('newSiteAddress').value = '';
         }
         
         function updateSitePreview() {
@@ -1777,6 +1828,7 @@
         async function createNewSite() {
             const city = document.getElementById('newCity').value.trim().toUpperCase();
             const locationId = document.getElementById('locationId').value.trim().toUpperCase();
+            const siteAddress = document.getElementById('newSiteAddress').value.trim();
             const siteType = document.getElementById('newSiteType').value;
             
             if (!city || !locationId) {
@@ -1788,7 +1840,7 @@
             
             const newSite = {
                 siteid: siteId,
-                siteaddress: '',
+                siteaddress: siteAddress,
                 sitetype: siteType,
                 accessinfo: '',
                 devicename: `${siteId}-DEVICE-01`,
