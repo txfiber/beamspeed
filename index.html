@@ -1625,3 +1625,380 @@
                             <td style="text-align: center;">
                                 <button class="btn btn-danger" onclick="deleteRow(${item.id})" title="Delete this device">🗑️</button>
                             </td>
+                        `;
+                        
+                        tbody.appendChild(row);
+                    });
+                });
+            });
+        }
+        
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const passwordField = document.getElementById(fieldId);
+            if (passwordField) {
+                if (passwordField.type === 'password') {
+                    passwordField.type = 'text';
+                } else {
+                    passwordField.type = 'password';
+                }
+            }
+        }
+        
+        // Update status color dynamically
+        function updateStatusColor(element) {
+            const value = element.value;
+            if (value === 'Active') {
+                element.style.background = '#10b981';
+            } else if (value === 'Shutdown') {
+                element.style.background = '#f59e0b';
+            } else {
+                element.style.background = '#ef4444';
+            }
+        }
+        
+        // Update priority color dynamically
+        function updatePriorityColor(element) {
+            const value = element.value;
+            if (value === 'High') {
+                element.style.background = '#fce7f3';
+                element.style.color = '#be185d';
+            } else if (value === 'Medium') {
+                element.style.background = '#fef3c7';
+                element.style.color = '#d97706';
+            } else {
+                element.style.background = '#dbeafe';
+                element.style.color = '#1e40af';
+            }
+        }
+        
+        // Toggle city visibility
+        function toggleCity(city) {
+            const icon = document.querySelector(`tr[data-city="${city}"] .expand-icon`);
+            const isCollapsed = icon.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                icon.classList.remove('collapsed');
+                icon.textContent = '▼';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.remove('hidden');
+                });
+            } else {
+                icon.classList.add('collapsed');
+                icon.textContent = '▶';
+                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
+                    row.classList.add('hidden');
+                });
+            }
+        }
+        
+        // Update field
+        async function updateField(element, id, field) {
+            const newValue = element.type === 'number' ? Number(element.value) : element.value;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .update({ [field]: newValue })
+                    .eq('id', id);
+                
+                if (error) throw error;
+                
+                // Update local data
+                const index = allData.findIndex(item => item.id === id);
+                if (index !== -1) {
+                    allData[index][field] = newValue;
+                }
+                
+                // Re-render if siteid changed (affects grouping)
+                if (field === 'siteid') {
+                    renderTable();
+                }
+                
+                updateStats();
+                
+            } catch (error) {
+                console.error('Update error:', error);
+                alert('Failed to save changes');
+            }
+        }
+        
+        // Delete row
+        async function deleteRow(id) {
+            if (confirm('Are you sure you want to delete this device?')) {
+                try {
+                    const { error } = await supabaseClient
+                        .from('migration_tracker')
+                        .delete()
+                        .eq('id', id);
+                    
+                    if (error) throw error;
+                    
+                    allData = allData.filter(item => item.id !== id);
+                    renderTable();
+                    updateStats();
+                    
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Failed to delete');
+                }
+            }
+        }
+        
+        // Add site modal functions
+        function addRow() {
+            document.getElementById('siteModal').style.display = 'flex';
+            updateSitePreview();
+        }
+        
+        function closeSiteModal() {
+            document.getElementById('siteModal').style.display = 'none';
+            document.getElementById('newCity').value = '';
+            document.getElementById('locationId').value = '';
+        }
+        
+        function updateSitePreview() {
+            const city = document.getElementById('newCity').value.toUpperCase() || 'CITY';
+            const location = document.getElementById('locationId').value.toUpperCase() || 'LOCATION';
+            document.getElementById('sitePreview').textContent = `${city}-${location}`;
+        }
+        
+        // Add event listeners for site preview
+        document.addEventListener('DOMContentLoaded', function() {
+            ['newCity', 'locationId'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', updateSitePreview);
+                }
+            });
+            checkAuth();
+        });
+        
+        async function createNewSite() {
+            const city = document.getElementById('newCity').value.trim().toUpperCase();
+            const locationId = document.getElementById('locationId').value.trim().toUpperCase();
+            const siteType = document.getElementById('newSiteType').value;
+            
+            if (!city || !locationId) {
+                alert('Please enter both City and Location ID');
+                return;
+            }
+            
+            const siteId = `${city}-${locationId}`;
+            
+            const newSite = {
+                siteid: siteId,
+                siteaddress: '',
+                sitetype: siteType,
+                accessinfo: '',
+                devicename: `${siteId}-DEVICE-01`,
+                devicetype: '',
+                managementip: '',
+                username: '',
+                password: '',
+                status: 'Active',
+                circuitid: '',
+                ispprovider: '',
+                bandwidth: '',
+                customercount: 0,
+                migrationphase: 'Phase 1',
+                migrationdate: null,
+                priority: 'Medium',
+                notes: ''
+            };
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert([newSite])
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    allData.push(data[0]);
+                    renderTable();
+                    updateStats();
+                    closeSiteModal();
+                }
+                
+            } catch (error) {
+                console.error('Add site error:', error);
+                alert('Failed to create site');
+            }
+        }
+        
+        // Add device modal functions
+        function showAddDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+        
+        function populateSiteDropdown() {
+            const dropdown = document.getElementById('siteDropdown');
+            dropdown.innerHTML = '<option value="">Choose a site...</option>';
+            
+            const sites = new Set();
+            allData.forEach(item => {
+                if (item.siteid) sites.add(item.siteid);
+            });
+            
+            Array.from(sites).sort().forEach(site => {
+                const option = document.createElement('option');
+                option.value = site;
+                option.textContent = site;
+                dropdown.appendChild(option);
+            });
+        }
+        
+        async function addDevice() {
+            const siteid = document.getElementById('siteDropdown').value;
+            if (!siteid) {
+                alert('Please select a site');
+                return;
+            }
+            
+            const existingSite = allData.find(item => item.siteid === siteid);
+            if (!existingSite) {
+                alert('Site not found');
+                return;
+            }
+            
+            const newDevice = {
+                siteid: existingSite.siteid || '',
+                siteaddress: existingSite.siteaddress || '',
+                sitetype: existingSite.sitetype || '',
+                accessinfo: existingSite.accessinfo || '',
+                devicename: 'NEW-DEVICE',
+                devicetype: '',
+                managementip: '',
+                username: existingSite.username || '',
+                password: '',
+                status: 'Active',
+                circuitid: existingSite.circuitid || '',
+                ispprovider: existingSite.ispprovider || '',
+                bandwidth: existingSite.bandwidth || '',
+                customercount: existingSite.customercount || 0,
+                migrationphase: existingSite.migrationphase || 'Phase 1',
+                migrationdate: existingSite.migrationdate || null,
+                priority: existingSite.priority || 'Medium',
+                notes: ''
+            };
+            
+            delete newDevice.id; // Make sure we don't copy the ID
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert([newDevice])
+                    .select();
+                
+                if (error) throw error;
+                
+                if (data && data[0]) {
+                    allData.push(data[0]);
+                    renderTable();
+                    updateStats();
+                    updateDashboard();
+                    closeModal();
+                }
+                
+            } catch (error) {
+                console.error('Add device error:', error);
+                alert('Failed to add device: ' + error.message);
+            }
+        }
+        
+        // Other functions
+        function updateStats() {
+            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
+            document.getElementById('totalSites').textContent = uniqueSites;
+            document.getElementById('totalDevices').textContent = allData.length;
+            
+            let active = 0, pending = 0, completed = 0;
+            allData.forEach(item => {
+                if (item.status === 'Active') active++;
+                if (item.migrationphase === 'Complete') completed++;
+                else if (item.migrationphase) pending++;
+            });
+            
+            document.getElementById('activeDevices').textContent = active;
+            document.getElementById('pendingMigration').textContent = pending;
+            document.getElementById('completed').textContent = completed;
+        }
+        
+        async function undoLastChange() {
+            alert('Undo functionality coming soon');
+        }
+        
+        function exportToExcel() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            const headers = ['Site ID','Site Address','Site Type','Access Info','Device Name','Device Type','Management IP','Username','Status','Circuit ID','ISP Provider','Bandwidth','Customer Count','Migration Phase','Migration Date','Priority','Notes'];
+            csvContent += headers.join(',') + '\n';
+            
+            allData.forEach(item => {
+                const row = [
+                    item.siteid, item.siteaddress, item.sitetype, 
+                    item.accessinfo, item.devicename, item.devicetype, item.managementip,
+                    item.username, item.status, item.circuitid, item.ispprovider,
+                    item.bandwidth, item.customercount, item.migrationphase,
+                    item.migrationdate, item.priority, item.notes
+                ].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',');
+                csvContent += row + '\n';
+            });
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', 'beamspeed_migration.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        async function sortTable(column) {
+            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('migration_tracker')
+                    .select('*')
+                    .order(column, { ascending: sortDirection === 'asc' });
+                
+                if (error) throw error;
+                
+                allData = data || [];
+                renderTable();
+                
+            } catch (error) {
+                console.error('Sort error:', error);
+            }
+        }
+        
+        function filterTable(searchTerm) {
+            const rows = document.querySelectorAll('#tableBody tr.device-row');
+            searchTerm = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        }
+        
+        // Set up real-time subscription
+        supabaseClient
+            .channel('migration_tracker_changes')
+            .on('postgres_changes', 
+                { event: '*', schema: 'public', table: 'migration_tracker' }, 
+                (payload) => {
+                    console.log('Database change detected');
+                    loadData();
+                }
+            )
+            .subscribe();
+    </script>
+</body>
+</html>
