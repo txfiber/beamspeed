@@ -140,6 +140,14 @@
         .stat-value { font-size: 2em; font-weight: bold; color: #4285f4; }
         .stat-label { color: #6b7280; font-size: 0.9em; margin-top: 5px; }
         .loading { text-align: center; padding: 50px; color: #6b7280; font-size: 1.1em; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal { background: white; border-radius: 12px; padding: 30px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal h3 { color: #4285f4; margin-bottom: 20px; }
+        .modal label { display: block; margin-bottom: 8px; color: #495057; font-weight: 500; margin-top: 15px; }
+        .modal select, .modal input[type="text"], .modal input[type="date"] { width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 6px; font-size: 14px; }
+        .modal input:disabled { background: #f3f4f6; color: #6b7280; cursor: not-allowed; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 25px; justify-content: flex-end; }
+        .info-box { margin-top: 15px; padding: 12px; background: #f0f9ff; border-radius: 6px; font-size: 13px; color: #1e40af; border: 1px solid #bfdbfe; }
     </style>
 </head>
 <body>
@@ -359,6 +367,142 @@
                 </thead>
                 <tbody id="tableBody"></tbody>
             </table>
+        </div>
+    </div>
+    
+    <!-- Modal for Site Type Selection -->
+    <div class="modal-overlay" id="siteTypeSelector">
+        <div class="modal">
+            <h3>What would you like to add?</h3>
+            <p style="margin-bottom: 25px; color: #6b7280;">Choose whether to add a new city or a site location within an existing city.</p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div onclick="selectSiteType('city')" style="flex: 1; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">🏙️</div>
+                    <div style="color: white; font-weight: bold; font-size: 1.1em;">Add New City</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 5px;">Create a new city/state</div>
+                </div>
+                
+                <div onclick="selectSiteType('location')" style="flex: 1; padding: 25px; background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📍</div>
+                    <div style="color: white; font-weight: bold; font-size: 1.1em;">Add Site Location</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 5px;">Add location to existing city</div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeSiteTypeSelector()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add City -->
+    <div class="modal-overlay" id="cityModal">
+        <div class="modal">
+            <h3>Create New City</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Enter the city information:</p>
+            
+            <label>City:</label>
+            <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX, YUMA" style="text-transform: uppercase;">
+            
+            <label>State (2-letter code):</label>
+            <input type="text" id="newState" placeholder="e.g., TX, AZ, CA" maxlength="2" style="text-transform: uppercase;">
+            
+            <div class="info-box">
+                💡 This will create city: <strong id="cityPreview">CITY, ST</strong>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeCityModal()">Cancel</button>
+                <button class="btn btn-success" onclick="createNewCity()">Create City</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add Location -->
+    <div class="modal-overlay" id="locationModal">
+        <div class="modal">
+            <h3>Add Site Location</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Add a new site location to an existing city:</p>
+            
+            <label>Select City:</label>
+            <select id="cityDropdownForLocation" onchange="updateLocationCity()">
+                <option value="">Choose a city...</option>
+            </select>
+            
+            <label>Location Name:</label>
+            <input type="text" id="locationName" placeholder="e.g., HQ DataCenter, Tower Site #5">
+            
+            <label>Physical Address:</label>
+            <input type="text" id="locationAddress" placeholder="e.g., 123 Main St, Suite 100">
+            
+            <label>Site Type:</label>
+            <select id="newLocationType">
+                <option value="Data Center">Data Center</option>
+                <option value="Tower Site">Tower Site</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Office">Office</option>
+                <option value="Colocation">Colocation</option>
+                <option value="POP">POP</option>
+            </select>
+            
+            <div class="info-box">
+                💡 This location will be added under the selected city
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeLocationModal()">Cancel</button>
+                <button class="btn btn-success" onclick="createNewLocation()">Add Location</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add Device -->
+    <div class="modal-overlay" id="deviceModal">
+        <div class="modal">
+            <h3>Add Device to Existing Location</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Select the city and location for this device:</p>
+            
+            <label>Select City:</label>
+            <select id="deviceCity" onchange="updateLocationDropdown()">
+                <option value="">Choose a city...</option>
+            </select>
+            
+            <label>Select Location:</label>
+            <select id="deviceLocation" onchange="updateDeviceFields()">
+                <option value="">Choose a location...</option>
+            </select>
+            
+            <label>Site Name (Auto-populated):</label>
+            <input type="text" id="deviceSiteName" disabled>
+            
+            <label>Physical Address (Auto-populated):</label>
+            <input type="text" id="deviceAddress" disabled>
+            
+            <label>Site Type (Auto-populated):</label>
+            <input type="text" id="deviceSiteType" disabled>
+            
+            <label>Device Name:</label>
+            <input type="text" id="deviceName" placeholder="e.g., Core Router 1" value="New Device">
+            
+            <label>Device Type:</label>
+            <select id="deviceType">
+                <option value="Router">Router</option>
+                <option value="Switch">Switch</option>
+                <option value="Firewall">Firewall</option>
+                <option value="Server">Server</option>
+                <option value="AP">Access Point</option>
+                <option value="Other">Other</option>
+            </select>
+            
+            <div class="info-box">
+                💡 The device will inherit all site information from the selected location
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeDeviceModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="createNewDevice()">Add Device</button>
+            </div>
         </div>
     </div>
 
@@ -886,34 +1030,196 @@
         }
         
         function addRow() {
-            const city = prompt('Enter city and state (e.g., DALLAS, TX):');
-            if (city) {
-                const location = prompt('Enter location name:');
-                if (location) {
-                    addNewEntry(city, location);
-                }
+            document.getElementById('siteTypeSelector').style.display = 'flex';
+        }
+        
+        function closeSiteTypeSelector() {
+            document.getElementById('siteTypeSelector').style.display = 'none';
+        }
+        
+        function selectSiteType(type) {
+            closeSiteTypeSelector();
+            if (type === 'city') {
+                document.getElementById('cityModal').style.display = 'flex';
+                // Add event listeners for preview
+                document.getElementById('newCity').addEventListener('input', updateCityPreview);
+                document.getElementById('newState').addEventListener('input', updateCityPreview);
+            } else {
+                populateCityDropdown();
+                document.getElementById('locationModal').style.display = 'flex';
             }
         }
         
-        function addDevice() {
-            const city = prompt('Enter city for device:');
-            if (city) {
-                const location = prompt('Enter location for device:');
-                if (location) {
-                    addNewEntry(city, location);
-                }
+        function closeCityModal() {
+            document.getElementById('cityModal').style.display = 'none';
+        }
+        
+        function closeLocationModal() {
+            document.getElementById('locationModal').style.display = 'none';
+        }
+        
+        function closeDeviceModal() {
+            document.getElementById('deviceModal').style.display = 'none';
+        }
+        
+        function updateCityPreview() {
+            const city = document.getElementById('newCity').value.toUpperCase();
+            const state = document.getElementById('newState').value.toUpperCase();
+            document.getElementById('cityPreview').textContent = 
+                city && state ? `${city}, ${state}` : 'CITY, ST';
+        }
+        
+        function populateCityDropdown() {
+            const dropdown = document.getElementById('cityDropdownForLocation');
+            const deviceCityDropdown = document.getElementById('deviceCity');
+            
+            dropdown.innerHTML = '<option value="">Choose a city...</option>';
+            deviceCityDropdown.innerHTML = '<option value="">Choose a city...</option>';
+            
+            const cities = new Set();
+            allData.forEach(item => {
+                if (item.siteid) cities.add(item.siteid);
+            });
+            
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                dropdown.appendChild(option.cloneNode(true));
+                deviceCityDropdown.appendChild(option);
+            });
+        }
+        
+        function updateLocationDropdown() {
+            const selectedCity = document.getElementById('deviceCity').value;
+            const locationDropdown = document.getElementById('deviceLocation');
+            
+            locationDropdown.innerHTML = '<option value="">Choose a location...</option>';
+            
+            // Clear auto-populated fields
+            document.getElementById('deviceSiteName').value = '';
+            document.getElementById('deviceAddress').value = '';
+            document.getElementById('deviceSiteType').value = '';
+            
+            if (selectedCity) {
+                const locations = new Set();
+                allData.forEach(item => {
+                    if (item.siteid === selectedCity && item.sitename) {
+                        locations.add(JSON.stringify({
+                            name: item.sitename,
+                            address: item.address || '',
+                            type: item.sitetype || ''
+                        }));
+                    }
+                });
+                
+                locations.forEach(locStr => {
+                    const loc = JSON.parse(locStr);
+                    const option = document.createElement('option');
+                    option.value = locStr;
+                    option.textContent = loc.name;
+                    locationDropdown.appendChild(option);
+                });
             }
         }
         
-        async function addNewEntry(city, location) {
+        function updateDeviceFields() {
+            const locationValue = document.getElementById('deviceLocation').value;
+            
+            if (locationValue) {
+                const location = JSON.parse(locationValue);
+                document.getElementById('deviceSiteName').value = location.name;
+                document.getElementById('deviceAddress').value = location.address;
+                document.getElementById('deviceSiteType').value = location.type;
+            } else {
+                document.getElementById('deviceSiteName').value = '';
+                document.getElementById('deviceAddress').value = '';
+                document.getElementById('deviceSiteType').value = '';
+            }
+        }
+        
+        async function createNewCity() {
+            const city = document.getElementById('newCity').value.toUpperCase();
+            const state = document.getElementById('newState').value.toUpperCase();
+            
+            if (!city || !state) {
+                alert('Please enter both city and state');
+                return;
+            }
+            
+            const siteid = `${city}, ${state}`;
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert({ siteid });
+                
+                if (error) throw error;
+                
+                closeCityModal();
+                loadData();
+                
+            } catch (error) {
+                console.error('Error creating city:', error);
+                alert('Failed to create city. Please try again.');
+            }
+        }
+        
+        async function createNewLocation() {
+            const city = document.getElementById('cityDropdownForLocation').value;
+            const locationName = document.getElementById('locationName').value;
+            const address = document.getElementById('locationAddress').value;
+            const sitetype = document.getElementById('newLocationType').value;
+            
+            if (!city || !locationName) {
+                alert('Please select a city and enter a location name');
+                return;
+            }
+            
             try {
                 const { error } = await supabaseClient
                     .from('migration_tracker')
                     .insert({
                         siteid: city,
-                        sitename: location,
-                        devicename: 'New Device',
-                        devicetype: 'Router',
+                        sitename: locationName,
+                        address: address,
+                        sitetype: sitetype
+                    });
+                
+                if (error) throw error;
+                
+                closeLocationModal();
+                loadData();
+                
+            } catch (error) {
+                console.error('Error creating location:', error);
+                alert('Failed to create location. Please try again.');
+            }
+        }
+        
+        async function createNewDevice() {
+            const selectedCity = document.getElementById('deviceCity').value;
+            const locationValue = document.getElementById('deviceLocation').value;
+            const deviceName = document.getElementById('deviceName').value;
+            const deviceType = document.getElementById('deviceType').value;
+            
+            if (!selectedCity || !locationValue || !deviceName) {
+                alert('Please select city, location, and enter device name');
+                return;
+            }
+            
+            const location = JSON.parse(locationValue);
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('migration_tracker')
+                    .insert({
+                        siteid: selectedCity,
+                        sitename: location.name,
+                        address: location.address,
+                        sitetype: location.type,
+                        devicename: deviceName,
+                        devicetype: deviceType,
                         status: 'Active',
                         migrationphase: 'Phase 1',
                         priority: 'Medium'
@@ -921,12 +1227,18 @@
                 
                 if (error) throw error;
                 
+                closeDeviceModal();
                 loadData();
                 
             } catch (error) {
-                console.error('Error adding entry:', error);
-                alert('Failed to add entry. Please try again.');
+                console.error('Error adding device:', error);
+                alert('Failed to add device. Please try again.');
             }
+        }
+        
+        function addDevice() {
+            populateCityDropdown();
+            document.getElementById('deviceModal').style.display = 'flex';
         }
         
         function toggleExportDropdown(event) {
