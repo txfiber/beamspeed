@@ -763,7 +763,8 @@
             background: white;
         }
         
-        .city-row td:first-child {
+        .city-row td:first-child,
+        .location-row td:first-child {
             background: inherit;
         }
         
@@ -821,6 +822,23 @@
             border-bottom: 2px solid #dee2e6;
         }
         
+        .location-row {
+            background: #e0e7ff;
+            color: #4338ca;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .location-row:hover {
+            background: #c7d2fe;
+        }
+        
+        .location-row td {
+            padding: 12px;
+            border-bottom: 1px solid #cbd5e1;
+        }
+        
         .expand-icon {
             display: inline-block;
             width: 20px;
@@ -837,7 +855,8 @@
             transition: all 0.2s ease;
         }
         
-        .device-row.hidden {
+        .device-row.hidden,
+        .location-row.hidden {
             display: none;
         }
         
@@ -1021,8 +1040,14 @@
             <!-- KPI Cards -->
             <div class="kpi-section">
                 <div class="kpi-card">
-                    <div class="kpi-label">Total Sites</div>
-                    <div class="kpi-value" id="dashTotalSites">0</div>
+                    <div class="kpi-label">Total Cities</div>
+                    <div class="kpi-value" id="dashTotalCities">0</div>
+                    <span class="kpi-change">Live Data</span>
+                </div>
+                
+                <div class="kpi-card">
+                    <div class="kpi-label">Total Locations</div>
+                    <div class="kpi-value" id="dashTotalLocations">0</div>
                     <span class="kpi-change">Live Data</span>
                 </div>
                 
@@ -1036,12 +1061,6 @@
                     <div class="kpi-label">Active Devices</div>
                     <div class="kpi-value" id="dashActiveDevices">0</div>
                     <span class="kpi-change">Live Data</span>
-                </div>
-                
-                <div class="kpi-card">
-                    <div class="kpi-label">Migration Progress</div>
-                    <div class="kpi-value" id="dashProgress">0%</div>
-                    <span class="kpi-change">Tracking Progress</span>
                 </div>
             </div>
             
@@ -1162,8 +1181,12 @@
         <div class="footer">
             <div class="stats">
                 <div class="stat-card">
-                    <div class="stat-value" id="totalSites">0</div>
-                    <div class="stat-label">Total Sites</div>
+                    <div class="stat-value" id="totalCities">0</div>
+                    <div class="stat-label">Total Cities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalLocations">0</div>
+                    <div class="stat-label">Total Locations</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="totalDevices">0</div>
@@ -1172,10 +1195,6 @@
                 <div class="stat-card">
                     <div class="stat-value" id="activeDevices">0</div>
                     <div class="stat-label">Active Devices</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="pendingMigration">0</div>
-                    <div class="stat-label">Pending Migration</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="completed">0</div>
@@ -1196,10 +1215,10 @@
                         <th colspan="1" class="category-header">ACTIONS</th>
                     </tr>
                     <tr>
-                        <th>Site ID</th>
-                        <th>Site Address</th>
+                        <th>City/State</th>
+                        <th>Location Name</th>
+                        <th>Physical Address</th>
                         <th>Site Type</th>
-                        <th>Access Info</th>
                         <th>Device Name</th>
                         <th>Device Type</th>
                         <th>Management IP</th>
@@ -1223,33 +1242,37 @@
         </div>
     </div>
     
-    <!-- Modal for Add Device -->
-    <div class="modal-overlay" id="deviceModal">
+    <!-- Modal for Site Type Selection -->
+    <div class="modal-overlay" id="siteTypeSelector">
         <div class="modal">
-            <h3>Add Device to Existing Site</h3>
-            <p style="margin-bottom: 20px; color: #6b7280;">Select which site this device belongs to:</p>
+            <h3>What would you like to add?</h3>
+            <p style="margin-bottom: 25px; color: #6b7280;">Choose whether to add a new city or a site location within an existing city.</p>
             
-            <label>Select Site:</label>
-            <select id="siteDropdown">
-                <option value="">Choose a site...</option>
-            </select>
-            
-            <div class="info-box">
-                💡 The new device will inherit all site information from the selected site.
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <div onclick="selectSiteType('city')" style="flex: 1; padding: 25px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">🏙️</div>
+                    <div style="color: white; font-weight: bold; font-size: 1.1em;">Add New City</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 5px;">Create a new city/state</div>
+                </div>
+                
+                <div onclick="selectSiteType('location')" style="flex: 1; padding: 25px; background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%); border-radius: 8px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <div style="font-size: 2em; margin-bottom: 10px;">📍</div>
+                    <div style="color: white; font-weight: bold; font-size: 1.1em;">Add Site Location</div>
+                    <div style="color: rgba(255,255,255,0.8); font-size: 0.9em; margin-top: 5px;">Add location to existing city</div>
+                </div>
             </div>
             
             <div class="modal-actions">
-                <button class="btn" style="background: #e5e7eb;" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-secondary" onclick="addDevice()">Continue</button>
+                <button class="btn" style="background: #e5e7eb;" onclick="closeSiteTypeSelector()">Cancel</button>
             </div>
         </div>
     </div>
     
-    <!-- Modal for Add Site -->
+    <!-- Modal for Add City -->
     <div class="modal-overlay" id="siteModal">
         <div class="modal">
-            <h3>Create New Site</h3>
-            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location:</p>
+            <h3>Create New City</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Enter the city information:</p>
             
             <label>City:</label>
             <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX, YUMA" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
@@ -1257,21 +1280,73 @@
             <label>State (2-letter code):</label>
             <input type="text" id="newState" placeholder="e.g., TX, AZ, CA" maxlength="2" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
             
-            <label>Site Type:</label>
-            <select id="newSiteType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
-                <option value="Data Center">Data Center</option>
-                <option value="Tower Site">Tower Site</option>
-                <option value="Cabinet">Cabinet</option>
-                <option value="Office">Office</option>
-            </select>
-            
             <div class="info-box">
-                💡 This will create site: <strong id="sitePreview">CITY, ST</strong>
+                💡 This will create city: <strong id="sitePreview">CITY, ST</strong>
             </div>
             
             <div class="modal-actions">
                 <button class="btn" style="background: #e5e7eb;" onclick="closeSiteModal()">Cancel</button>
-                <button class="btn btn-success" onclick="createNewSite()">Create Site</button>
+                <button class="btn btn-success" onclick="createNewCity()">Create City</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add Location -->
+    <div class="modal-overlay" id="locationModal">
+        <div class="modal">
+            <h3>Add Site Location</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Add a new site location to an existing city:</p>
+            
+            <label>Select City:</label>
+            <select id="cityDropdownForLocation" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+                <option value="">Choose a city...</option>
+            </select>
+            
+            <label>Location Name:</label>
+            <input type="text" id="locationName" placeholder="e.g., HQ DataCenter, Tower Site #5" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            
+            <label>Physical Address:</label>
+            <input type="text" id="locationAddress" placeholder="e.g., 123 Main St, Suite 100" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+            
+            <label>Site Type:</label>
+            <select id="newLocationType" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
+                <option value="Data Center">Data Center</option>
+                <option value="Tower Site">Tower Site</option>
+                <option value="Cabinet">Cabinet</option>
+                <option value="Office">Office</option>
+                <option value="Colocation">Colocation</option>
+                <option value="POP">POP</option>
+            </select>
+            
+            <div class="info-box">
+                💡 This location will be added under the selected city
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeLocationModal()">Cancel</button>
+                <button class="btn btn-success" onclick="createNewLocation()">Add Location</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal for Add Device -->
+    <div class="modal-overlay" id="deviceModal">
+        <div class="modal">
+            <h3>Add Device to Existing Location</h3>
+            <p style="margin-bottom: 20px; color: #6b7280;">Select which location this device belongs to:</p>
+            
+            <label>Select Location:</label>
+            <select id="siteDropdown">
+                <option value="">Choose a location...</option>
+            </select>
+            
+            <div class="info-box">
+                💡 The new device will inherit all site information from the selected location.
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn" style="background: #e5e7eb;" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-secondary" onclick="addDevice()">Continue</button>
             </div>
         </div>
     </div>
@@ -1381,28 +1456,43 @@
         function updateDashboard() {
             if (!allData || allData.length === 0) return;
             
-            // Calculate metrics
-            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
-            const totalDevices = allData.length;
-            const activeDevices = allData.filter(item => item.status === 'Active').length;
-            const completedDevices = allData.filter(item => item.migrationphase === 'Complete').length;
-            const migrationProgress = totalDevices > 0 ? Math.round((completedDevices / totalDevices) * 100) : 0;
+            // Calculate metrics for 3-tier structure
+            const cities = new Set();
+            const locations = new Set();
+            let deviceCount = 0;
+            let activeDevices = 0;
+            
+            allData.forEach(item => {
+                if (!item.sitename && !item.devicename) {
+                    // City row
+                    cities.add(item.siteid);
+                } else if (item.sitename && !item.devicename) {
+                    // Location row
+                    locations.add(`${item.siteid}|${item.sitename}`);
+                } else if (item.devicename) {
+                    // Device row
+                    deviceCount++;
+                    if (item.status === 'Active') activeDevices++;
+                }
+            });
+            
+            const completedDevices = allData.filter(item => item.migrationphase === 'Complete' && item.devicename).length;
+            const migrationProgress = deviceCount > 0 ? Math.round((completedDevices / deviceCount) * 100) : 0;
             
             // Update KPIs
-            document.getElementById('dashTotalSites').textContent = uniqueSites;
-            document.getElementById('dashTotalDevices').textContent = totalDevices;
+            document.getElementById('dashTotalCities').textContent = cities.size;
+            document.getElementById('dashTotalLocations').textContent = locations.size;
+            document.getElementById('dashTotalDevices').textContent = deviceCount;
             document.getElementById('dashActiveDevices').textContent = activeDevices;
-            document.getElementById('dashProgress').textContent = migrationProgress + '%';
             
             // Update progress bar
             document.getElementById('overallProgressBar').style.width = migrationProgress + '%';
             document.getElementById('overallProgressText').textContent = migrationProgress + '%';
             
-            // Phase breakdown
-            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1').length;
-            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2').length;
-            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3').length;
-            const completeCount = completedDevices;
+            // Phase breakdown (only count devices)
+            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1' && item.devicename).length;
+            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2' && item.devicename).length;
+            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3' && item.devicename).length;
             
             document.getElementById('phase1Count').textContent = phase1Count + ' devices';
             document.getElementById('phase2Count').textContent = phase2Count + ' devices';
@@ -1424,14 +1514,14 @@
                 document.getElementById('phase2').classList.add('completed');
                 document.getElementById('phase3').classList.add('active');
             }
-            if (completeCount > 0 && completeCount === totalDevices) {
+            if (completedDevices > 0 && completedDevices === deviceCount) {
                 document.getElementById('phase3').classList.add('completed');
             }
             
-            // Priority distribution
-            const highPriority = allData.filter(item => item.priority === 'High').length;
-            const mediumPriority = allData.filter(item => item.priority === 'Medium').length;
-            const lowPriority = allData.filter(item => item.priority === 'Low').length;
+            // Priority distribution (only count devices)
+            const highPriority = allData.filter(item => item.priority === 'High' && item.devicename).length;
+            const mediumPriority = allData.filter(item => item.priority === 'Medium' && item.devicename).length;
+            const lowPriority = allData.filter(item => item.priority === 'Low' && item.devicename).length;
             const maxPriority = Math.max(highPriority, mediumPriority, lowPriority, 1);
             
             const highBar = document.getElementById('highPriorityBar');
@@ -1461,30 +1551,41 @@
             
             sitesGrid.innerHTML = '';
             
-            // Group devices by site
-            const siteGroups = {};
+            // Group devices by city and location
+            const cityGroups = {};
             allData.forEach(item => {
-                const siteKey = item.siteid || 'UNASSIGNED';
-                if (!siteGroups[siteKey]) {
-                    siteGroups[siteKey] = {
-                        siteid: item.siteid,
-                        physicaladdress: item.physicaladdress,  // Changed from siteaddress
-                        sitetype: item.sitetype,
-                        devices: [],
-                        bandwidth: item.bandwidth || '',
+                const cityKey = item.siteid || 'UNASSIGNED';
+                
+                if (!cityGroups[cityKey]) {
+                    cityGroups[cityKey] = {
+                        locations: {},
+                        totalDevices: 0,
                         totalCustomers: 0,
                         phases: new Set(),
                         statuses: new Set()
                     };
                 }
-                siteGroups[siteKey].devices.push(item);
-                siteGroups[siteKey].totalCustomers += parseInt(item.customercount) || 0;
-                siteGroups[siteKey].phases.add(item.migrationphase);
-                siteGroups[siteKey].statuses.add(item.status);
+                
+                if (item.devicename) {
+                    const locationKey = item.sitename || 'UNASSIGNED';
+                    if (!cityGroups[cityKey].locations[locationKey]) {
+                        cityGroups[cityKey].locations[locationKey] = {
+                            devices: [],
+                            sitetype: item.sitetype
+                        };
+                    }
+                    cityGroups[cityKey].locations[locationKey].devices.push(item);
+                    cityGroups[cityKey].totalDevices++;
+                    cityGroups[cityKey].totalCustomers += parseInt(item.customercount) || 0;
+                    cityGroups[cityKey].phases.add(item.migrationphase);
+                    cityGroups[cityKey].statuses.add(item.status);
+                }
             });
             
             // Create site cards
-            Object.values(siteGroups).forEach(site => {
+            Object.entries(cityGroups).forEach(([cityName, cityData]) => {
+                if (cityData.totalDevices === 0) return; // Skip cities with no devices
+                
                 const card = document.createElement('div');
                 card.className = 'site-card';
                 card.onclick = () => switchToTableView();
@@ -1492,856 +1593,43 @@
                 // Determine overall site status
                 let siteStatus = 'INACTIVE';
                 let statusClass = 'status-inactive-card';
-                if (site.statuses.has('Active')) {
+                if (cityData.statuses.has('Active')) {
                     siteStatus = 'ACTIVE';
                     statusClass = 'status-active-card';
-                } else if (site.statuses.has('Shutdown')) {
+                } else if (cityData.statuses.has('Shutdown')) {
                     siteStatus = 'PENDING';
                     statusClass = 'status-pending';
                 }
                 
                 // Get primary phase
                 let primaryPhase = 'Phase 1';
-                if (site.phases.has('Complete')) primaryPhase = 'Complete';
-                else if (site.phases.has('Phase 3')) primaryPhase = 'Phase 3';
-                else if (site.phases.has('Phase 2')) primaryPhase = 'Phase 2';
+                if (cityData.phases.has('Complete')) primaryPhase = 'Complete';
+                else if (cityData.phases.has('Phase 3')) primaryPhase = 'Phase 3';
+                else if (cityData.phases.has('Phase 2')) primaryPhase = 'Phase 2';
+                
+                const locationCount = Object.keys(cityData.locations).length;
                 
                 card.innerHTML = `
                     <div class="site-header-card">
                         <div>
-                            <div class="site-name">${site.siteid || 'Unnamed Site'}</div>
-                            <div class="site-id">${site.devices.length} total devices</div>
+                            <div class="site-name">${cityName || 'Unnamed City'}</div>
+                            <div class="site-id">${locationCount} locations, ${cityData.totalDevices} devices</div>
                         </div>
                         <div class="site-status ${statusClass}">${siteStatus}</div>
                     </div>
                     <div class="site-metrics">
                         <div class="site-metric">
-                            <span class="metric-label">Devices</span>
-                            <span class="metric-value">${site.devices.length}</span>
+                            <span class="metric-label">Locations</span>
+                            <span class="metric-value">${locationCount}</span>
                         </div>
                         <div class="site-metric">
-                            <span class="metric-label">Type</span>
-                            <span class="metric-value">${site.sitetype || 'N/A'}</span>
+                            <span class="metric-label">Devices</span>
+                            <span class="metric-value">${cityData.totalDevices}</span>
                         </div>
                         <div class="site-metric">
                             <span class="metric-label">Customers</span>
-                            <span class="metric-value">${site.totalCustomers}</span>
+                            <span class="metric-value">${cityData.totalCustomers}</span>
                         </div>
                         <div class="site-metric">
                             <span class="metric-label">Phase</span>
-                            <span class="metric-value">${primaryPhase}</span>
-                        </div>
-                    </div>
-                `;
-                
-                sitesGrid.appendChild(card);
-            });
-        }
-        
-        function filterSites(filter, event) {
-            // Update active tab
-            if (event) {
-                document.querySelectorAll('.filter-tab').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                event.target.classList.add('active');
-            }
-            
-            // Filter site cards
-            const cards = document.querySelectorAll('.site-card');
-            cards.forEach(card => {
-                const status = card.querySelector('.site-status').textContent;
-                const phase = Array.from(card.querySelectorAll('.metric-value')).pop().textContent;
-                
-                let show = false;
-                switch(filter) {
-                    case 'all':
-                        show = true;
-                        break;
-                    case 'active':
-                        show = status === 'ACTIVE';
-                        break;
-                    case 'pending':
-                        show = phase.includes('Phase');
-                        break;
-                    case 'completed':
-                        show = phase === 'Complete';
-                        break;
-                }
-                
-                card.style.display = show ? 'block' : 'none';
-            });
-        }
-        
-        // Render table
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            if (allData.length === 0) {
-                document.getElementById('loadingMessage').style.display = 'block';
-                document.getElementById('loadingMessage').textContent = 'No data available';
-                document.getElementById('migrationTable').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('migrationTable').style.display = 'table';
-            
-            // Group data by city (site)
-            const groupedData = {};
-            allData.forEach(item => {
-                const city = item.siteid || 'UNASSIGNED';
-                if (!groupedData[city]) groupedData[city] = [];
-                groupedData[city].push(item);
-            });
-            
-            // Render each city group
-            Object.entries(groupedData).forEach(([city, devices]) => {
-                // City header row
-                const cityRow = document.createElement('tr');
-                cityRow.className = 'city-row';
-                cityRow.setAttribute('data-city', city);
-                cityRow.onclick = () => toggleCity(city);
-                cityRow.innerHTML = `
-                    <td colspan="19">
-                        <span class="expand-icon">▼</span> ${city}
-                        <span style="margin-left: 10px; opacity: 0.8;">(${devices.length} devices)</span>
-                    </td>
-                `;
-                tbody.appendChild(cityRow);
-                
-                // Device rows for this site
-                devices.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.className = 'device-row';
-                    row.setAttribute('data-city', city);
-                    row.setAttribute('data-id', item.id);
-                    
-                    // Create unique ID for password field
-                    const passwordId = `password-${item.id}`;
-                    
-                    row.innerHTML = `
-                        <td><input class="editable" value="${item.siteid || ''}" readonly style="background: #f5f5f5; cursor: not-allowed;" title="Site ID cannot be changed"></td>
-                        <td><input class="editable" value="${item.physicaladdress || ''}" onblur="updateField(this, ${item.id}, 'physicaladdress')" placeholder="Enter full address"></td>
-                        <td>
-                            <select class="editable" onchange="updateField(this, ${item.id}, 'sitetype')">
-                                <option value="">Select</option>
-                                <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
-                                <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
-                                <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
-                                <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
-                            </select>
-                        </td>
-                        <td><input class="editable" value="${item.accessinfo || ''}" onblur="updateField(this, ${item.id}, 'accessinfo')"></td>
-                        <td><input class="editable" value="${item.devicename || ''}" onblur="updateField(this, ${item.id}, 'devicename')"></td>
-                        <td>
-                            <select class="editable" onchange="updateField(this, ${item.id}, 'devicetype')">
-                                <option value="">Select</option>
-                                <option value="Router" ${item.devicetype === 'Router' ? 'selected' : ''}>Router</option>
-                                <option value="Switch" ${item.devicetype === 'Switch' ? 'selected' : ''}>Switch</option>
-                                <option value="Firewall" ${item.devicetype === 'Firewall' ? 'selected' : ''}>Firewall</option>
-                                <option value="Access Point" ${item.devicetype === 'Access Point' ? 'selected' : ''}>Access Point</option>
-                                <option value="Server" ${item.devicetype === 'Server' ? 'selected' : ''}>Server</option>
-                                <option value="Backhaul" ${item.devicetype === 'Backhaul' ? 'selected' : ''}>Backhaul</option>
-                            </select>
-                        </td>
-                        <td><input class="editable" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
-                        <td><input class="editable" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
-                        <td style="position: relative;">
-                            <input class="editable" type="password" id="${passwordId}" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')" style="padding-right: 30px;">
-                            <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;" title="Toggle password visibility">👁️</button>
-                        </td>
-                        <td>
-                            <select class="editable" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
-                                <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                                <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                                <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                            </select>
-                        </td>
-                        <td><input class="editable" value="${item.circuitid || ''}" onblur="updateField(this, ${item.id}, 'circuitid')"></td>
-                        <td><input class="editable" value="${item.ispprovider || ''}" onblur="updateField(this, ${item.id}, 'ispprovider')"></td>
-                        <td><input class="editable" value="${item.bandwidth || ''}" onblur="updateField(this, ${item.id}, 'bandwidth')"></td>
-                        <td><input class="editable" type="number" value="${item.customercount || 0}" onblur="updateField(this, ${item.id}, 'customercount')"></td>
-                        <td>
-                            <select class="editable" onchange="updateField(this, ${item.id}, 'migrationphase')">
-                                <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
-                                <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
-                                <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
-                                <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
-                            </select>
-                        </td>
-                        <td><input class="editable" type="date" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
-                        <td>
-                            <select class="editable" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
-                                <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
-                                <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                                <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
-                            </select>
-                        </td>
-                        <td><input class="editable" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
-                        <td style="text-align: center;">
-                            <button class="btn btn-danger" onclick="deleteRow(${item.id})" title="Delete this device">🗑️</button>
-                        </td>
-                    `;
-                    
-                    tbody.appendChild(row);
-                });
-            });
-        }
-        
-        // Toggle password visibility
-        function togglePassword(fieldId) {
-            const passwordField = document.getElementById(fieldId);
-            if (passwordField) {
-                if (passwordField.type === 'password') {
-                    passwordField.type = 'text';
-                } else {
-                    passwordField.type = 'password';
-                }
-            }
-        }
-        
-        // Update status color dynamically
-        function updateStatusColor(element) {
-            const value = element.value;
-            if (value === 'Active') {
-                element.style.background = '#10b981';
-            } else if (value === 'Shutdown') {
-                element.style.background = '#f59e0b';
-            } else {
-                element.style.background = '#ef4444';
-            }
-        }
-        
-        // Update priority color dynamically
-        function updatePriorityColor(element) {
-            const value = element.value;
-            if (value === 'High') {
-                element.style.background = '#fce7f3';
-                element.style.color = '#be185d';
-            } else if (value === 'Medium') {
-                element.style.background = '#fef3c7';
-                element.style.color = '#d97706';
-            } else {
-                element.style.background = '#dbeafe';
-                element.style.color = '#1e40af';
-            }
-        }
-        
-        // Toggle city visibility
-        function toggleCity(city) {
-            const icon = document.querySelector(`tr[data-city="${city}"] .expand-icon`);
-            const isCollapsed = icon.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                icon.classList.remove('collapsed');
-                icon.textContent = '▼';
-                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
-                    row.classList.remove('hidden');
-                });
-            } else {
-                icon.classList.add('collapsed');
-                icon.textContent = '▶';
-                document.querySelectorAll(`tr[data-city="${city}"]:not(.city-row)`).forEach(row => {
-                    row.classList.add('hidden');
-                });
-            }
-        }
-        
-        // Update field
-        async function updateField(element, id, field) {
-            const newValue = element.type === 'number' ? Number(element.value) : element.value;
-            
-            try {
-                const { error } = await supabaseClient
-                    .from('migration_tracker')
-                    .update({ [field]: newValue })
-                    .eq('id', id);
-                
-                if (error) throw error;
-                
-                // Update local data
-                const index = allData.findIndex(item => item.id === id);
-                if (index !== -1) {
-                    allData[index][field] = newValue;
-                }
-                
-                // Re-render if siteid changed (affects grouping)
-                if (field === 'siteid') {
-                    renderTable();
-                }
-                
-                updateStats();
-                updateDashboard();
-                
-            } catch (error) {
-                console.error('Update error:', error);
-                alert('Failed to save changes');
-            }
-        }
-        
-        // Delete row
-        async function deleteRow(id) {
-            if (confirm('Are you sure you want to delete this device?')) {
-                try {
-                    const { error } = await supabaseClient
-                        .from('migration_tracker')
-                        .delete()
-                        .eq('id', id);
-                    
-                    if (error) throw error;
-                    
-                    allData = allData.filter(item => item.id !== id);
-                    renderTable();
-                    updateStats();
-                    updateDashboard();
-                    populateSiteDropdown();
-                    
-                } catch (error) {
-                    console.error('Delete error:', error);
-                    alert('Failed to delete');
-                }
-            }
-        }
-        
-        // Add site modal functions
-        function addRow() {
-            document.getElementById('siteModal').style.display = 'flex';
-            updateSitePreview();
-        }
-        
-        function closeSiteModal() {
-            document.getElementById('siteModal').style.display = 'none';
-            document.getElementById('newCity').value = '';
-            document.getElementById('newState').value = '';
-        }
-        
-        function updateSitePreview() {
-            const city = document.getElementById('newCity').value.toUpperCase() || 'CITY';
-            const state = document.getElementById('newState').value.toUpperCase() || 'ST';
-            document.getElementById('sitePreview').textContent = `${city}, ${state}`;
-        }
-        
-        // Add event listeners for site preview
-        document.addEventListener('DOMContentLoaded', function() {
-            const cityElement = document.getElementById('newCity');
-            const stateElement = document.getElementById('newState');
-            if (cityElement) {
-                cityElement.addEventListener('input', updateSitePreview);
-            }
-            if (stateElement) {
-                stateElement.addEventListener('input', updateSitePreview);
-            }
-            checkAuth();
-        });
-        
-        async function createNewSite() {
-            const city = document.getElementById('newCity').value.trim().toUpperCase();
-            const state = document.getElementById('newState').value.trim().toUpperCase();
-            const siteType = document.getElementById('newSiteType').value;
-            
-            if (!city || !state) {
-                alert('Please enter both City and State');
-                return;
-            }
-            
-            if (state.length !== 2) {
-                alert('Please enter a 2-letter state code (e.g., AZ, TX, CA)');
-                return;
-            }
-            
-            const siteId = `${city}, ${state}`;
-            
-            const newSite = {
-                siteid: siteId,
-                sitename: city,  // Just the city name
-                sitetype: siteType,
-                physicaladdress: '',  // Leave empty - to be filled per device
-                accessinfo: '',
-                devicename: `${city}-DEVICE-01`,  // Use city for device naming
-                devicetype: '',
-                managementip: '',
-                username: '',
-                password: '',
-                status: 'Active',
-                circuitid: '',
-                ispprovider: '',
-                bandwidth: '',
-                customercount: 0,
-                migrationphase: 'Phase 1',
-                migrationdate: null,
-                priority: 'Medium',
-                notes: ''
-            };
-            
-            try {
-                const { data, error } = await supabaseClient
-                    .from('migration_tracker')
-                    .insert([newSite])
-                    .select();
-                
-                if (error) throw error;
-                
-                if (data && data[0]) {
-                    allData.push(data[0]);
-                    renderTable();
-                    updateStats();
-                    updateDashboard();
-                    populateSiteDropdown();
-                    closeSiteModal();
-                    alert(`Site ${siteId} created successfully!`);
-                }
-                
-            } catch (error) {
-                console.error('Add site error:', error);
-                alert('Failed to create site: ' + error.message);
-            }
-        }
-        
-        // Add device modal functions
-        function showAddDeviceModal() {
-            document.getElementById('deviceModal').style.display = 'flex';
-        }
-        
-        function closeModal() {
-            document.getElementById('deviceModal').style.display = 'none';
-        }
-        
-        function populateSiteDropdown() {
-            const dropdown = document.getElementById('siteDropdown');
-            dropdown.innerHTML = '<option value="">Choose a site...</option>';
-            
-            const sites = new Set();
-            allData.forEach(item => {
-                if (item.siteid) sites.add(item.siteid);
-            });
-            
-            Array.from(sites).sort().forEach(site => {
-                const option = document.createElement('option');
-                option.value = site;
-                option.textContent = site;
-                dropdown.appendChild(option);
-            });
-        }
-        
-        async function addDevice() {
-            const siteid = document.getElementById('siteDropdown').value;
-            if (!siteid) {
-                alert('Please select a site');
-                return;
-            }
-            
-            // Get the first device from the selected site to inherit site-level data
-            const existingSite = allData.find(item => item.siteid === siteid);
-            if (!existingSite) {
-                alert('Site not found');
-                return;
-            }
-            
-            // Extract city name from siteid (e.g., "YUMA, AZ" -> "YUMA")
-            const cityName = siteid.split(',')[0].trim();
-            
-            // Count existing devices for this site to generate a unique name
-            const deviceCount = allData.filter(item => item.siteid === siteid).length;
-            const deviceNumber = (deviceCount + 1).toString().padStart(2, '0');
-            
-            const newDevice = {
-                siteid: existingSite.siteid,
-                sitename: existingSite.sitename || cityName,
-                sitetype: existingSite.sitetype || '',
-                physicaladdress: '',  // Leave empty to be filled per device
-                accessinfo: existingSite.accessinfo || '',
-                devicename: `${cityName}-DEVICE-${deviceNumber}`,
-                devicetype: '',
-                managementip: '',
-                username: '',
-                password: '',
-                status: 'Active',
-                circuitid: '',
-                ispprovider: existingSite.ispprovider || '',
-                bandwidth: '',
-                customercount: 0,
-                migrationphase: 'Phase 1',
-                migrationdate: null,
-                priority: 'Medium',
-                notes: ''
-            };
-            
-            try {
-                const { data, error } = await supabaseClient
-                    .from('migration_tracker')
-                    .insert([newDevice])
-                    .select();
-                
-                if (error) throw error;
-                
-                if (data && data[0]) {
-                    allData.push(data[0]);
-                    renderTable();
-                    updateStats();
-                    updateDashboard();
-                    populateSiteDropdown();
-                    closeModal();
-                    alert(`Device ${newDevice.devicename} added successfully!`);
-                }
-                
-            } catch (error) {
-                console.error('Add device error:', error);
-                alert('Failed to add device: ' + error.message);
-            }
-        }
-        
-        // Other functions
-        function updateStats() {
-            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
-            document.getElementById('totalSites').textContent = uniqueSites;
-            document.getElementById('totalDevices').textContent = allData.length;
-            
-            let active = 0, pending = 0, completed = 0;
-            allData.forEach(item => {
-                if (item.status === 'Active') active++;
-                if (item.migrationphase === 'Complete') completed++;
-                else if (item.migrationphase) pending++;
-            });
-            
-            document.getElementById('activeDevices').textContent = active;
-            document.getElementById('pendingMigration').textContent = pending;
-            document.getElementById('completed').textContent = completed;
-        }
-        
-        async function undoLastChange() {
-            alert('Undo functionality coming soon');
-        }
-        
-        function toggleExportDropdown(event) {
-            event.stopPropagation();
-            const dropdown = document.getElementById('exportDropdown');
-            dropdown.classList.toggle('show');
-        }
-        
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function() {
-            const dropdown = document.getElementById('exportDropdown');
-            if (dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-            }
-        });
-        
-        function exportToExcel() {
-            const dropdown = document.getElementById('exportDropdown');
-            dropdown.classList.remove('show');
-            
-            let csvContent = "data:text/csv;charset=utf-8,";
-            const headers = ['Site ID','Physical Address','Site Type','Access Info','Device Name','Device Type','Management IP','Username','Status','Circuit ID','ISP Provider','Bandwidth','Customer Count','Migration Phase','Migration Date','Priority','Notes'];
-            csvContent += headers.join(',') + '\n';
-            
-            allData.forEach(item => {
-                const row = [
-                    item.siteid, item.physicaladdress, item.sitetype, 
-                    item.accessinfo, item.devicename, item.devicetype, item.managementip,
-                    item.username, item.status, item.circuitid, item.ispprovider,
-                    item.bandwidth, item.customercount, item.migrationphase,
-                    item.migrationdate, item.priority, item.notes
-                ].map(field => `"${String(field || '').replace(/"/g, '""')}"`).join(',');
-                csvContent += row + '\n';
-            });
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'beamspeed_migration.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-        
-        function exportToPDF() {
-            const dropdown = document.getElementById('exportDropdown');
-            dropdown.classList.remove('show');
-            
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            // Calculate metrics
-            const uniqueSites = new Set(allData.map(item => item.siteid)).size;
-            const totalDevices = allData.length;
-            const activeDevices = allData.filter(item => item.status === 'Active').length;
-            const completedDevices = allData.filter(item => item.migrationphase === 'Complete').length;
-            const migrationProgress = totalDevices > 0 ? Math.round((completedDevices / totalDevices) * 100) : 0;
-            
-            // Phase counts
-            const phase1Count = allData.filter(item => item.migrationphase === 'Phase 1').length;
-            const phase2Count = allData.filter(item => item.migrationphase === 'Phase 2').length;
-            const phase3Count = allData.filter(item => item.migrationphase === 'Phase 3').length;
-            
-            // Priority counts
-            const highPriority = allData.filter(item => item.priority === 'High').length;
-            const mediumPriority = allData.filter(item => item.priority === 'Medium').length;
-            const lowPriority = allData.filter(item => item.priority === 'Low').length;
-            
-            // Group devices by site
-            const siteGroups = {};
-            allData.forEach(item => {
-                const siteKey = item.siteid || 'UNASSIGNED';
-                if (!siteGroups[siteKey]) {
-                    siteGroups[siteKey] = {
-                        devices: [],
-                        sitetype: item.sitetype,
-                        totalCustomers: 0
-                    };
-                }
-                siteGroups[siteKey].devices.push(item);
-                siteGroups[siteKey].totalCustomers += parseInt(item.customercount) || 0;
-            });
-            
-            // Add gradient header
-            doc.setFillColor(102, 126, 234);
-            doc.rect(0, 0, 210, 40, 'F');
-            doc.setFillColor(118, 75, 162);
-            doc.rect(0, 0, 210, 40, 'F');
-            
-            // Add title and logo
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(24);
-            doc.setFont(undefined, 'bold');
-            doc.text('BeamSpeed Network Migration Report', 105, 20, { align: 'center' });
-            doc.setFontSize(12);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
-            
-            // Add resound logo watermark
-            doc.setTextColor(255, 255, 255, 0.2);
-            doc.setFontSize(40);
-            doc.setFont(undefined, 'bold');
-            doc.text('resound', 180, 25, { align: 'right' });
-            
-            // KPI Section
-            let yPos = 55;
-            doc.setTextColor(37, 99, 235);
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Key Performance Indicators', 15, yPos);
-            
-            // KPI Cards
-            yPos += 10;
-            const kpiData = [
-                { label: 'Total Sites', value: uniqueSites },
-                { label: 'Total Devices', value: totalDevices },
-                { label: 'Active Devices', value: activeDevices },
-                { label: 'Migration Progress', value: `${migrationProgress}%` }
-            ];
-            
-            let xPos = 15;
-            kpiData.forEach((kpi, index) => {
-                // Card background
-                doc.setFillColor(245, 247, 250);
-                doc.roundedRect(xPos, yPos, 42, 25, 3, 3, 'F');
-                
-                // Label
-                doc.setTextColor(107, 114, 128);
-                doc.setFontSize(9);
-                doc.setFont(undefined, 'normal');
-                doc.text(kpi.label, xPos + 21, yPos + 8, { align: 'center' });
-                
-                // Value
-                doc.setTextColor(37, 99, 235);
-                doc.setFontSize(18);
-                doc.setFont(undefined, 'bold');
-                doc.text(String(kpi.value), xPos + 21, yPos + 18, { align: 'center' });
-                
-                xPos += 47;
-            });
-            
-            // Migration Timeline
-            yPos += 40;
-            doc.setTextColor(37, 99, 235);
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Migration Timeline', 15, yPos);
-            
-            yPos += 10;
-            doc.setTextColor(75, 85, 99);
-            doc.setFontSize(10);
-            doc.setFont(undefined, 'normal');
-            doc.text(`Phase 1: ${phase1Count} devices`, 15, yPos);
-            doc.text(`Phase 2: ${phase2Count} devices`, 75, yPos);
-            doc.text(`Phase 3: ${phase3Count} devices`, 135, yPos);
-            
-            // Priority Distribution
-            yPos += 20;
-            doc.setTextColor(37, 99, 235);
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Priority Distribution', 15, yPos);
-            
-            yPos += 10;
-            // High Priority Bar
-            doc.setFillColor(239, 68, 68);
-            doc.rect(15, yPos, (highPriority / totalDevices) * 100 || 1, 8, 'F');
-            doc.setTextColor(75, 85, 99);
-            doc.setFontSize(10);
-            doc.text(`High: ${highPriority} devices`, 120, yPos + 6);
-            
-            yPos += 12;
-            // Medium Priority Bar
-            doc.setFillColor(245, 158, 11);
-            doc.rect(15, yPos, (mediumPriority / totalDevices) * 100 || 1, 8, 'F');
-            doc.text(`Medium: ${mediumPriority} devices`, 120, yPos + 6);
-            
-            yPos += 12;
-            // Low Priority Bar
-            doc.setFillColor(59, 130, 246);
-            doc.rect(15, yPos, (lowPriority / totalDevices) * 100 || 1, 8, 'F');
-            doc.text(`Low: ${lowPriority} devices`, 120, yPos + 6);
-            
-            // Site Overview
-            yPos += 25;
-            doc.setTextColor(37, 99, 235);
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Site Overview', 15, yPos);
-            
-            yPos += 10;
-            Object.entries(siteGroups).forEach(([siteName, siteData]) => {
-                if (yPos > 250) {
-                    doc.addPage();
-                    yPos = 20;
-                }
-                
-                // Site card
-                doc.setFillColor(245, 247, 250);
-                doc.roundedRect(15, yPos, 180, 20, 3, 3, 'F');
-                
-                // Site name
-                doc.setTextColor(37, 99, 235);
-                doc.setFontSize(12);
-                doc.setFont(undefined, 'bold');
-                doc.text(siteName, 20, yPos + 8);
-                
-                // Site details
-                doc.setTextColor(75, 85, 99);
-                doc.setFontSize(10);
-                doc.setFont(undefined, 'normal');
-                doc.text(`${siteData.devices.length} devices | Type: ${siteData.sitetype || 'N/A'} | ${siteData.totalCustomers} customers`, 20, yPos + 15);
-                
-                yPos += 25;
-            });
-            
-            // Device Details Table (new page)
-            doc.addPage();
-            doc.setTextColor(37, 99, 235);
-            doc.setFontSize(16);
-            doc.setFont(undefined, 'bold');
-            doc.text('Device Details', 15, 20);
-            
-            // Table headers
-            yPos = 35;
-            doc.setFontSize(8);
-            doc.setTextColor(75, 85, 99);
-            doc.setFont(undefined, 'bold');
-            doc.text('Site', 15, yPos);
-            doc.text('Device', 45, yPos);
-            doc.text('Type', 75, yPos);
-            doc.text('IP', 95, yPos);
-            doc.text('Status', 125, yPos);
-            doc.text('Phase', 145, yPos);
-            doc.text('Priority', 170, yPos);
-            
-            // Table data
-            yPos += 5;
-            doc.setFont(undefined, 'normal');
-            allData.forEach(device => {
-                if (yPos > 270) {
-                    doc.addPage();
-                    yPos = 20;
-                    // Repeat headers
-                    doc.setFont(undefined, 'bold');
-                    doc.text('Site', 15, yPos);
-                    doc.text('Device', 45, yPos);
-                    doc.text('Type', 75, yPos);
-                    doc.text('IP', 95, yPos);
-                    doc.text('Status', 125, yPos);
-                    doc.text('Phase', 145, yPos);
-                    doc.text('Priority', 170, yPos);
-                    yPos += 5;
-                    doc.setFont(undefined, 'normal');
-                }
-                
-                doc.setFontSize(7);
-                doc.text(device.siteid || '', 15, yPos);
-                doc.text(device.devicename || '', 45, yPos);
-                doc.text(device.devicetype || '', 75, yPos);
-                doc.text(device.managementip || '', 95, yPos);
-                
-                // Color code status
-                if (device.status === 'Active') doc.setTextColor(16, 185, 129);
-                else if (device.status === 'Shutdown') doc.setTextColor(245, 158, 11);
-                else doc.setTextColor(239, 68, 68);
-                doc.text(device.status || '', 125, yPos);
-                
-                doc.setTextColor(75, 85, 99);
-                doc.text(device.migrationphase || '', 145, yPos);
-                
-                // Color code priority
-                if (device.priority === 'High') doc.setTextColor(239, 68, 68);
-                else if (device.priority === 'Medium') doc.setTextColor(245, 158, 11);
-                else doc.setTextColor(59, 130, 246);
-                doc.text(device.priority || '', 170, yPos);
-                
-                doc.setTextColor(75, 85, 99);
-                yPos += 6;
-            });
-            
-            // Footer on last page
-            doc.setTextColor(156, 163, 175);
-            doc.setFontSize(8);
-            doc.text('BeamSpeed Network Migration Tracker - Confidential', 105, 285, { align: 'center' });
-            
-            // Save the PDF
-            doc.save('beamspeed_migration_report.pdf');
-        }
-        
-        async function sortTable(column) {
-            sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            
-            try {
-                const { data, error } = await supabaseClient
-                    .from('migration_tracker')
-                    .select('*')
-                    .order(column, { ascending: sortDirection === 'asc' });
-                
-                if (error) throw error;
-                
-                allData = data || [];
-                renderTable();
-                
-            } catch (error) {
-                console.error('Sort error:', error);
-            }
-        }
-        
-        function filterTable(searchTerm) {
-            const rows = document.querySelectorAll('#tableBody tr.device-row');
-            searchTerm = searchTerm.toLowerCase();
-            
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(searchTerm) ? '' : 'none';
-            });
-        }
-        
-        // Set up real-time subscription
-        supabaseClient
-            .channel('migration_tracker_changes')
-            .on('postgres_changes', 
-                { event: '*', schema: 'public', table: 'migration_tracker' }, 
-                (payload) => {
-                    console.log('Database change detected');
-                    loadData();
-                }
-            )
-            .subscribe();
-    </script>
-</body>
-</html>
+                            <span class="metric-value"
