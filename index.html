@@ -1035,8 +1035,8 @@
                     <span>Live Sync Active</span>
                 </div>
                 <div class="view-toggle">
-                    <button class="view-btn active" id="dashViewBtn" onclick="switchToTableView()">Table View</button>
-                    <button class="view-btn" id="tableViewBtn">Dashboard</button>
+                    <button class="view-btn" id="dashViewBtn" onclick="switchToTableView()">Table View</button>
+                    <button class="view-btn active" id="tableViewBtn">Dashboard</button>
                 </div>
             </div>
         </div>
@@ -1177,7 +1177,7 @@
                 </div>
             </div>
             <button class="btn btn-primary" onclick="sortTable('siteid')">🏢 Sort by Site</button>
-            <button class="btn btn-primary" onclick="sortTable('sitetype')">🔍 Sort by Site Type</button>
+            <button class="btn btn-primary" onclick="sortTable('sitetype')">📍 Sort by Site Type</button>
             <button class="btn btn-dashboard" onclick="toggleView()">📈 Dashboard</button>
             <button class="btn btn-danger" onclick="logout()" style="margin-left: auto;">🔒 Logout</button>
             <input type="text" class="search-box" placeholder="🔍 Search sites, devices, or IPs..." onkeyup="filterTable(this.value)">
@@ -1637,3 +1637,5 @@
                         </div>
                         <div class="site-metric">
                             <span class="metric-label">Phase</span>
+                            <span class="metric-value">${primaryPhase}</span>
+                        </div>
