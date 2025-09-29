@@ -723,8 +723,7 @@
             background: white;
         }
         
-        .city-row td:first-child,
-        .location-row td:first-child {
+        .city-row td:first-child {
             background: inherit;
         }
         
@@ -795,16 +794,6 @@
             transform: rotate(-90deg);
         }
         
-        .location-row {
-            background: #f0f4f8;
-            font-weight: 600;
-            border-left: 4px solid #6366f1;
-        }
-        
-        .location-row.hidden {
-            display: none;
-        }
-        
         .device-row {
             background: white;
             border-left: 4px solid transparent;
@@ -834,15 +823,6 @@
             background: white;
             border-color: #2563eb;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        /* Better visual spacing for grouped sections */
-        .city-row + .location-row {
-            border-top: none;
-        }
-        
-        .location-row + .device-row {
-            padding-left: 20px;
         }
         
         .footer {
@@ -1216,13 +1196,10 @@
     <div class="modal-overlay" id="siteModal">
         <div class="modal">
             <h3>Create New Site</h3>
-            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site location details:</p>
+            <p style="margin-bottom: 20px; color: #6b7280;">Enter the site details:</p>
             
             <label>City/Region:</label>
-            <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
-            
-            <label>Location ID:</label>
-            <input type="text" id="locationId" placeholder="e.g., TWR01, DC01, CAB03" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
+            <input type="text" id="newCity" placeholder="e.g., DALLAS, PHOENIX, YUMA" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px; text-transform: uppercase;">
             
             <label>Site Address:</label>
             <input type="text" id="newSiteAddress" placeholder="e.g., 123 Tower Road, Phoenix, AZ 85001" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 2px solid #e5e7eb; border-radius: 6px;">
@@ -1236,7 +1213,7 @@
             </select>
             
             <div class="info-box">
-                💡 This will create site: <strong id="sitePreview">CITY-LOCATION</strong>
+                💡 This will create site: <strong id="sitePreview">CITY</strong>
             </div>
             
             <div class="modal-actions">
@@ -1543,7 +1520,7 @@
             });
         }
         
-        // Render table with collapsible sections
+        // Render table - now groups by city only (no location)
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -1558,17 +1535,16 @@
             document.getElementById('loadingMessage').style.display = 'none';
             document.getElementById('migrationTable').style.display = 'table';
             
-            // Group data by city
+            // Group data by city (site)
             const groupedData = {};
             allData.forEach(item => {
-                const parts = item.siteid ? item.siteid.split('-') : ['UNASSIGNED'];
-                const city = parts[0] || 'UNASSIGNED';
+                const city = item.siteid || 'UNASSIGNED';
                 if (!groupedData[city]) groupedData[city] = [];
                 groupedData[city].push(item);
             });
             
             // Render each city group
-            Object.entries(groupedData).forEach(([city, items]) => {
+            Object.entries(groupedData).forEach(([city, devices]) => {
                 // City header row
                 const cityRow = document.createElement('tr');
                 cityRow.className = 'city-row';
@@ -1577,108 +1553,86 @@
                 cityRow.innerHTML = `
                     <td colspan="19">
                         <span class="expand-icon">▼</span> ${city}
-                        <span style="margin-left: 10px; opacity: 0.8;">(${items.length} devices)</span>
+                        <span style="margin-left: 10px; opacity: 0.8;">(${devices.length} devices)</span>
                     </td>
                 `;
                 tbody.appendChild(cityRow);
                 
-                // Group by location within each city
-                const locations = {};
-                items.forEach(item => {
-                    const parts = item.siteid ? item.siteid.split('-') : ['', 'NO-LOCATION'];
-                    const location = parts[1] || 'NO-LOCATION';
-                    if (!locations[location]) locations[location] = [];
-                    locations[location].push(item);
-                });
-                
-                Object.entries(locations).forEach(([location, devices]) => {
-                    // Location row
-                    const locationRow = document.createElement('tr');
-                    locationRow.className = 'location-row';
-                    locationRow.setAttribute('data-city', city);
-                    locationRow.innerHTML = `
-                        <td colspan="19" style="padding-left: 30px;">
-                            📍 ${location} <span style="opacity: 0.7;">(${devices.length} device${devices.length > 1 ? 's' : ''})</span>
+                // Device rows for this site
+                devices.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'device-row';
+                    row.setAttribute('data-city', city);
+                    row.setAttribute('data-id', item.id);
+                    
+                    // Create unique ID for password field
+                    const passwordId = `password-${item.id}`;
+                    
+                    row.innerHTML = `
+                        <td><input class="editable" value="${item.siteid || ''}" readonly style="background: #f5f5f5; cursor: not-allowed;" title="Site ID cannot be changed"></td>
+                        <td><input class="editable" value="${item.siteaddress || ''}" onblur="updateField(this, ${item.id}, 'siteaddress')" placeholder="Enter full address"></td>
+                        <td>
+                            <select class="editable" onchange="updateField(this, ${item.id}, 'sitetype')">
+                                <option value="">Select</option>
+                                <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
+                                <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
+                                <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
+                                <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
+                            </select>
+                        </td>
+                        <td><input class="editable" value="${item.accessinfo || ''}" onblur="updateField(this, ${item.id}, 'accessinfo')"></td>
+                        <td><input class="editable" value="${item.devicename || ''}" onblur="updateField(this, ${item.id}, 'devicename')"></td>
+                        <td>
+                            <select class="editable" onchange="updateField(this, ${item.id}, 'devicetype')">
+                                <option value="">Select</option>
+                                <option value="Router" ${item.devicetype === 'Router' ? 'selected' : ''}>Router</option>
+                                <option value="Switch" ${item.devicetype === 'Switch' ? 'selected' : ''}>Switch</option>
+                                <option value="Firewall" ${item.devicetype === 'Firewall' ? 'selected' : ''}>Firewall</option>
+                                <option value="Access Point" ${item.devicetype === 'Access Point' ? 'selected' : ''}>Access Point</option>
+                                <option value="Server" ${item.devicetype === 'Server' ? 'selected' : ''}>Server</option>
+                                <option value="Backhaul" ${item.devicetype === 'Backhaul' ? 'selected' : ''}>Backhaul</option>
+                            </select>
+                        </td>
+                        <td><input class="editable" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
+                        <td><input class="editable" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
+                        <td style="position: relative;">
+                            <input class="editable" type="password" id="${passwordId}" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')" style="padding-right: 30px;">
+                            <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;" title="Toggle password visibility">👁️</button>
+                        </td>
+                        <td>
+                            <select class="editable" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
+                                <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
+                                <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
+                                <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                            </select>
+                        </td>
+                        <td><input class="editable" value="${item.circuitid || ''}" onblur="updateField(this, ${item.id}, 'circuitid')"></td>
+                        <td><input class="editable" value="${item.ispprovider || ''}" onblur="updateField(this, ${item.id}, 'ispprovider')"></td>
+                        <td><input class="editable" value="${item.bandwidth || ''}" onblur="updateField(this, ${item.id}, 'bandwidth')"></td>
+                        <td><input class="editable" type="number" value="${item.customercount || 0}" onblur="updateField(this, ${item.id}, 'customercount')"></td>
+                        <td>
+                            <select class="editable" onchange="updateField(this, ${item.id}, 'migrationphase')">
+                                <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
+                                <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
+                                <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
+                                <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
+                            </select>
+                        </td>
+                        <td><input class="editable" type="date" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
+                        <td>
+                            <select class="editable" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
+                                <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
+                                <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
+                                <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
+                            </select>
+                        </td>
+                        <td><input class="editable" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
+                        <td style="text-align: center;">
+                            <button class="btn btn-danger" onclick="deleteRow(${item.id})" title="Delete this device">🗑️</button>
                         </td>
                     `;
-                    tbody.appendChild(locationRow);
                     
-                    // Device rows
-                    devices.forEach(item => {
-                        const row = document.createElement('tr');
-                        row.className = 'device-row';
-                        row.setAttribute('data-city', city);
-                        row.setAttribute('data-id', item.id);
-                        
-                        // Create unique ID for password field
-                        const passwordId = `password-${item.id}`;
-                        
-                        row.innerHTML = `
-                            <td><input class="editable" value="${item.siteid || ''}" readonly style="background: #f5f5f5; cursor: not-allowed;" title="Site ID cannot be changed"></td>
-                            <td><input class="editable" value="${item.siteaddress || ''}" onblur="updateField(this, ${item.id}, 'siteaddress')" placeholder="Enter full address"></td>
-                            <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'sitetype')">
-                                    <option value="">Select</option>
-                                    <option value="Data Center" ${item.sitetype === 'Data Center' ? 'selected' : ''}>Data Center</option>
-                                    <option value="Tower Site" ${item.sitetype === 'Tower Site' ? 'selected' : ''}>Tower Site</option>
-                                    <option value="Cabinet" ${item.sitetype === 'Cabinet' ? 'selected' : ''}>Cabinet</option>
-                                    <option value="Office" ${item.sitetype === 'Office' ? 'selected' : ''}>Office</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" value="${item.accessinfo || ''}" onblur="updateField(this, ${item.id}, 'accessinfo')"></td>
-                            <td><input class="editable" value="${item.devicename || ''}" onblur="updateField(this, ${item.id}, 'devicename')"></td>
-                            <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'devicetype')">
-                                    <option value="">Select</option>
-                                    <option value="Router" ${item.devicetype === 'Router' ? 'selected' : ''}>Router</option>
-                                    <option value="Switch" ${item.devicetype === 'Switch' ? 'selected' : ''}>Switch</option>
-                                    <option value="Firewall" ${item.devicetype === 'Firewall' ? 'selected' : ''}>Firewall</option>
-                                    <option value="Access Point" ${item.devicetype === 'Access Point' ? 'selected' : ''}>Access Point</option>
-                                    <option value="Server" ${item.devicetype === 'Server' ? 'selected' : ''}>Server</option>
-                                    <option value="Backhaul" ${item.devicetype === 'Backhaul' ? 'selected' : ''}>Backhaul</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" value="${item.managementip || ''}" onblur="updateField(this, ${item.id}, 'managementip')"></td>
-                            <td><input class="editable" value="${item.username || ''}" onblur="updateField(this, ${item.id}, 'username')"></td>
-                            <td style="position: relative;">
-                                <input class="editable" type="password" id="${passwordId}" value="${item.password || ''}" onblur="updateField(this, ${item.id}, 'password')" style="padding-right: 30px;">
-                                <button onclick="togglePassword('${passwordId}')" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 5px;" title="Toggle password visibility">👁️</button>
-                            </td>
-                            <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'status'); updateStatusColor(this)" style="background: ${item.status === 'Active' ? '#10b981' : item.status === 'Shutdown' ? '#f59e0b' : '#ef4444'}; color: white;">
-                                    <option value="Active" ${item.status === 'Active' ? 'selected' : ''}>Active</option>
-                                    <option value="Shutdown" ${item.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                                    <option value="Inactive" ${item.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" value="${item.circuitid || ''}" onblur="updateField(this, ${item.id}, 'circuitid')"></td>
-                            <td><input class="editable" value="${item.ispprovider || ''}" onblur="updateField(this, ${item.id}, 'ispprovider')"></td>
-                            <td><input class="editable" value="${item.bandwidth || ''}" onblur="updateField(this, ${item.id}, 'bandwidth')"></td>
-                            <td><input class="editable" type="number" value="${item.customercount || 0}" onblur="updateField(this, ${item.id}, 'customercount')"></td>
-                            <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'migrationphase')">
-                                    <option value="Phase 1" ${item.migrationphase === 'Phase 1' ? 'selected' : ''}>Phase 1</option>
-                                    <option value="Phase 2" ${item.migrationphase === 'Phase 2' ? 'selected' : ''}>Phase 2</option>
-                                    <option value="Phase 3" ${item.migrationphase === 'Phase 3' ? 'selected' : ''}>Phase 3</option>
-                                    <option value="Complete" ${item.migrationphase === 'Complete' ? 'selected' : ''}>Complete</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" type="date" value="${item.migrationdate || ''}" onblur="updateField(this, ${item.id}, 'migrationdate')"></td>
-                            <td>
-                                <select class="editable" onchange="updateField(this, ${item.id}, 'priority'); updatePriorityColor(this)" style="${item.priority === 'High' ? 'background: #fce7f3; color: #be185d;' : item.priority === 'Medium' ? 'background: #fef3c7; color: #d97706;' : 'background: #dbeafe; color: #1e40af;'}">
-                                    <option value="High" ${item.priority === 'High' ? 'selected' : ''}>High</option>
-                                    <option value="Medium" ${item.priority === 'Medium' ? 'selected' : ''}>Medium</option>
-                                    <option value="Low" ${item.priority === 'Low' ? 'selected' : ''}>Low</option>
-                                </select>
-                            </td>
-                            <td><input class="editable" value="${item.notes || ''}" onblur="updateField(this, ${item.id}, 'notes')"></td>
-                            <td style="text-align: center;">
-                                <button class="btn btn-danger" onclick="deleteRow(${item.id})" title="Delete this device">🗑️</button>
-                            </td>
-                        `;
-                        
-                        tbody.appendChild(row);
-                    });
+                    tbody.appendChild(row);
                 });
             });
         }
@@ -1804,39 +1758,34 @@
         function closeSiteModal() {
             document.getElementById('siteModal').style.display = 'none';
             document.getElementById('newCity').value = '';
-            document.getElementById('locationId').value = '';
             document.getElementById('newSiteAddress').value = '';
         }
         
         function updateSitePreview() {
             const city = document.getElementById('newCity').value.toUpperCase() || 'CITY';
-            const location = document.getElementById('locationId').value.toUpperCase() || 'LOCATION';
-            document.getElementById('sitePreview').textContent = `${city}-${location}`;
+            document.getElementById('sitePreview').textContent = city;
         }
         
         // Add event listeners for site preview
         document.addEventListener('DOMContentLoaded', function() {
-            ['newCity', 'locationId'].forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.addEventListener('input', updateSitePreview);
-                }
-            });
+            const cityElement = document.getElementById('newCity');
+            if (cityElement) {
+                cityElement.addEventListener('input', updateSitePreview);
+            }
             checkAuth();
         });
         
         async function createNewSite() {
             const city = document.getElementById('newCity').value.trim().toUpperCase();
-            const locationId = document.getElementById('locationId').value.trim().toUpperCase();
             const siteAddress = document.getElementById('newSiteAddress').value.trim();
             const siteType = document.getElementById('newSiteType').value;
             
-            if (!city || !locationId) {
-                alert('Please enter both City and Location ID');
+            if (!city) {
+                alert('Please enter a City/Region');
                 return;
             }
             
-            const siteId = `${city}-${locationId}`;
+            const siteId = city;
             
             const newSite = {
                 siteid: siteId,
@@ -2053,4 +2002,4 @@
             .subscribe();
     </script>
 </body>
-</html>
+</html> 
