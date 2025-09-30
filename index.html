@@ -133,6 +133,15 @@
         .editable { background: transparent; border: 1px solid transparent; padding: 5px 8px; width: 100%; min-width: 100px; transition: all 0.3s ease; }
         .editable:hover { background: white; border-color: #e5e7eb; }
         .editable:focus { outline: none; background: white; border-color: #4285f4; box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1); }
+        select.editable { background: white; cursor: pointer; }
+        select.editable:hover { background: linear-gradient(to bottom, #f8f9fa, #ffffff); }
+        .status-select { background: white; border: 2px solid #e5e7eb; border-radius: 6px; padding: 6px 10px; cursor: pointer; transition: all 0.3s ease; font-weight: 500; }
+        .status-select:hover { border-color: #4285f4; background: linear-gradient(to bottom, #f0f4ff, #ffffff); }
+        .status-select:focus { outline: none; border-color: #4285f4; box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1); }
+        .status-select option { padding: 8px; }
+        .status-select option[value="Active"] { background: #d1fae5; color: #065f46; }
+        .status-select option[value="Shutdown"] { background: #fed7aa; color: #92400e; }
+        .status-select option[value="Inactive"] { background: #fee2e2; color: #991b1b; }
         .password-container { position: relative; display: inline-block; width: 100%; }
         .password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer; padding: 4px; font-size: 16px; z-index: 1; }
         .password-toggle:hover { color: #4285f4; }
@@ -515,6 +524,25 @@
             </div>
         </div>
     </div>
+    
+    <!-- Quick Actions Button -->
+    <div class="floating-help" id="floatingHelp">
+        <div class="quick-stats" id="floatingStats">
+            <h4 style="margin-bottom: 15px; color: #4285f4;">Quick Actions</h4>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn btn-primary" style="width: 100%;" onclick="loadData()">🔄 Refresh Data</button>
+                <button class="btn btn-success" style="width: 100%;" onclick="addRow()">➕ Add Site</button>
+                <button class="btn btn-secondary" style="width: 100%;" onclick="addDevice()">📡 Add Device</button>
+                <button class="btn btn-dashboard" style="width: 100%;" onclick="toggleView()">📊 Dashboard</button>
+            </div>
+            <hr style="margin: 15px 0; border: none; border-top: 1px solid #e5e7eb;">
+            <div style="font-size: 12px; color: #6b7280;">
+                <div>💡 Tip: Click on rows to expand/collapse</div>
+                <div style="margin-top: 5px;">⌨️ Press Tab to navigate fields</div>
+            </div>
+        </div>
+        <button class="help-button" onclick="toggleQuickStats()">⚡</button>
+    </div>
 
     <script>
         const AUTH_CONFIG = { username: 'beamspeed', password: 'Resound2026' };
@@ -615,10 +643,10 @@
                     </div>
                 </td>
                 <td>
-                    <select class="editable" onchange="updateCell(${device.id}, 'status', this.value)">
-                        <option value="Active" ${device.status === 'Active' ? 'selected' : ''}>Active</option>
-                        <option value="Shutdown" ${device.status === 'Shutdown' ? 'selected' : ''}>Shutdown</option>
-                        <option value="Inactive" ${device.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                    <select class="editable status-select" onchange="updateCell(${device.id}, 'status', this.value)" style="background: ${device.status === 'Active' ? '#d1fae5' : device.status === 'Shutdown' ? '#fed7aa' : '#fee2e2'}; color: ${device.status === 'Active' ? '#065f46' : device.status === 'Shutdown' ? '#92400e' : '#991b1b'};">
+                        <option value="Active" ${device.status === 'Active' ? 'selected' : ''}>✅ Active</option>
+                        <option value="Shutdown" ${device.status === 'Shutdown' ? 'selected' : ''}>⏸️ Shutdown</option>
+                        <option value="Inactive" ${device.status === 'Inactive' ? 'selected' : ''}>❌ Inactive</option>
                     </select>
                 </td>
                 <td><input class="editable" value="${device.circuitid || ''}" onchange="updateCell(${device.id}, 'circuitid', this.value)"></td>
@@ -836,6 +864,23 @@
                     undoHistory.push({ id, field, oldValue: item[field], newValue: value });
                     if (undoHistory.length > MAX_UNDO_HISTORY) undoHistory.shift();
                     item[field] = value;
+                    
+                    // Update status dropdown color when status changes
+                    if (field === 'status') {
+                        const selectElement = event.target;
+                        if (selectElement && selectElement.tagName === 'SELECT') {
+                            if (value === 'Active') {
+                                selectElement.style.background = '#d1fae5';
+                                selectElement.style.color = '#065f46';
+                            } else if (value === 'Shutdown') {
+                                selectElement.style.background = '#fed7aa';
+                                selectElement.style.color = '#92400e';
+                            } else {
+                                selectElement.style.background = '#fee2e2';
+                                selectElement.style.color = '#991b1b';
+                            }
+                        }
+                    }
                 }
                 
                 updateStats();
@@ -1151,16 +1196,33 @@
             }
         }
         
-        function closeCityModal() {
-            document.getElementById('cityModal').style.display = 'none';
-        }
-        
         function closeLocationModal() {
+            // Clear form fields when closing
+            document.getElementById('cityDropdownForLocation').value = '';
+            document.getElementById('locationName').value = '';
+            document.getElementById('locationAddress').value = '';
+            document.getElementById('newLocationType').value = 'Data Center';
             document.getElementById('locationModal').style.display = 'none';
         }
         
         function closeDeviceModal() {
+            // Clear form fields when closing
+            document.getElementById('deviceCity').value = '';
+            document.getElementById('deviceLocation').innerHTML = '<option value="">Choose a location...</option>';
+            document.getElementById('deviceSiteName').value = '';
+            document.getElementById('deviceAddress').value = '';
+            document.getElementById('deviceSiteType').value = '';
+            document.getElementById('deviceName').value = '';
+            document.getElementById('deviceType').value = 'Router';
             document.getElementById('deviceModal').style.display = 'none';
+        }
+        
+        function closeCityModal() {
+            // Clear form fields when closing
+            document.getElementById('newCity').value = '';
+            document.getElementById('newState').value = '';
+            document.getElementById('cityPreview').textContent = 'CITY, ST';
+            document.getElementById('cityModal').style.display = 'none';
         }
         
         function updateCityPreview() {
@@ -1257,6 +1319,11 @@
                 
                 if (error) throw error;
                 
+                // Clear form fields after successful submission
+                document.getElementById('newCity').value = '';
+                document.getElementById('newState').value = '';
+                document.getElementById('cityPreview').textContent = 'CITY, ST';
+                
                 closeCityModal();
                 loadData();
                 
@@ -1291,6 +1358,12 @@
                     console.error('Supabase error:', error);
                     throw error;
                 }
+                
+                // Clear form fields after successful submission
+                document.getElementById('cityDropdownForLocation').value = '';
+                document.getElementById('locationName').value = '';
+                document.getElementById('locationAddress').value = '';
+                document.getElementById('newLocationType').value = 'Data Center';
                 
                 closeLocationModal();
                 loadData();
@@ -1331,6 +1404,15 @@
                     });
                 
                 if (error) throw error;
+                
+                // Clear form fields after successful submission
+                document.getElementById('deviceCity').value = '';
+                document.getElementById('deviceLocation').innerHTML = '<option value="">Choose a location...</option>';
+                document.getElementById('deviceSiteName').value = '';
+                document.getElementById('deviceAddress').value = '';
+                document.getElementById('deviceSiteType').value = '';
+                document.getElementById('deviceName').value = '';
+                document.getElementById('deviceType').value = 'Router';
                 
                 closeDeviceModal();
                 loadData();
@@ -1431,31 +1513,6 @@
         
         window.onload = function() {
             checkAuth();
-            
-            // Add floating action button with quick stats instead of download button
-            if (!sessionStorage.getItem('fabAdded')) {
-                const fabContainer = document.createElement('div');
-                fabContainer.className = 'floating-help';
-                fabContainer.innerHTML = `
-                    <div class="quick-stats" id="floatingStats">
-                        <h4 style="margin-bottom: 15px; color: #4285f4;">Quick Actions</h4>
-                        <div style="display: flex; flex-direction: column; gap: 10px;">
-                            <button class="btn btn-primary" style="width: 100%;" onclick="loadData()">🔄 Refresh Data</button>
-                            <button class="btn btn-success" style="width: 100%;" onclick="addRow()">➕ Add Site</button>
-                            <button class="btn btn-secondary" style="width: 100%;" onclick="addDevice()">📡 Add Device</button>
-                            <button class="btn btn-dashboard" style="width: 100%;" onclick="toggleView()">📊 Dashboard</button>
-                        </div>
-                        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e5e7eb;">
-                        <div style="font-size: 12px; color: #6b7280;">
-                            <div>💡 Tip: Click on rows to expand/collapse</div>
-                            <div style="margin-top: 5px;">⌨️ Press Tab to navigate fields</div>
-                        </div>
-                    </div>
-                    <button class="help-button" onclick="toggleQuickStats()">⚡</button>
-                `;
-                document.body.appendChild(fabContainer);
-                sessionStorage.setItem('fabAdded', 'true');
-            }
         };
     </script>
 </body>
