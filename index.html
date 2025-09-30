@@ -591,72 +591,6 @@
             }
         }
         
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            document.getElementById('loadingMessage').style.display = 'none';
-            document.getElementById('migrationTable').style.display = 'table';
-            
-            const grouped = {};
-            
-            allData.forEach(item => {
-                const cityKey = item.siteid || 'UNASSIGNED';
-                if (!grouped[cityKey]) {
-                    grouped[cityKey] = { locations: {} };
-                }
-                
-                if (item.sitename) {
-                    const locationKey = item.sitename;
-                    if (!grouped[cityKey].locations[locationKey]) {
-                        grouped[cityKey].locations[locationKey] = [];
-                    }
-                    if (item.devicename) {
-                        grouped[cityKey].locations[locationKey].push(item);
-                    }
-                }
-            });
-            
-            Object.entries(grouped).forEach(([city, cityData]) => {
-                const cityRow = document.createElement('tr');
-                cityRow.className = 'city-row';
-                cityRow.innerHTML = `
-                    <td colspan="19">
-                        <span class="expand-icon">▼</span> ${city}
-                    </td>
-                `;
-                cityRow.onclick = () => toggleCityCollapse(city);
-                tbody.appendChild(cityRow);
-                
-                Object.entries(cityData.locations).forEach(([location, devices]) => {
-                    const locationRow = document.createElement('tr');
-                    locationRow.className = 'location-row';
-                    locationRow.dataset.city = city;
-                    
-                    const firstDevice = devices[0] || {};
-                    locationRow.innerHTML = `
-                        <td></td>
-                        <td>
-                            <span class="expand-icon">▼</span> ${location}
-                        </td>
-                        <td>${firstDevice.address || ''}</td>
-                        <td>${firstDevice.sitetype || ''}</td>
-                        <td colspan="15"></td>
-                    `;
-                    locationRow.onclick = () => toggleLocationCollapse(city, location);
-                    tbody.appendChild(locationRow);
-                    
-                    devices.forEach(device => {
-                        const deviceRow = document.createElement('tr');
-                        deviceRow.className = 'device-row';
-                        deviceRow.dataset.city = city;
-                        deviceRow.dataset.location = location;
-                        deviceRow.innerHTML = createDeviceRowHTML(device);
-                        tbody.appendChild(deviceRow);
-                    });
-                });
-            });
-        }
-        
         function createDeviceRowHTML(device) {
             return `
                 <td></td><td></td><td></td><td></td>
@@ -1259,7 +1193,7 @@
                     if (item.siteid === selectedCity && item.sitename) {
                         locations.add(JSON.stringify({
                             name: item.sitename,
-                            address: item.address || '',
+                            address: item.physicaladdress || '',  // Changed to use physicaladdress
                             type: item.sitetype || ''
                         }));
                     }
@@ -1329,30 +1263,14 @@
             }
             
             try {
-                // Create a location row - only include fields that exist in the database
-                const insertData = {
-                    siteid: city,
-                    sitename: locationName,
-                    sitetype: sitetype || 'Office'
-                };
-                
-                // Try to include address if the field exists
-                // First, let's check what columns exist by doing a test query
-                const { data: testData, error: testError } = await supabaseClient
-                    .from('migration_tracker')
-                    .select('*')
-                    .limit(1);
-                
-                if (!testError && testData && testData.length > 0) {
-                    // Check if address column exists
-                    if ('address' in testData[0]) {
-                        insertData.address = locationAddress || '';
-                    }
-                }
-                
                 const { data, error } = await supabaseClient
                     .from('migration_tracker')
-                    .insert(insertData);
+                    .insert({
+                        siteid: city,
+                        sitename: locationName,
+                        physicaladdress: locationAddress || '', // Changed from 'address' to 'physicaladdress'
+                        sitetype: sitetype || 'Office'
+                    });
                 
                 if (error) {
                     console.error('Supabase error:', error);
@@ -1388,7 +1306,7 @@
                     .insert({
                         siteid: selectedCity,
                         sitename: location.name,
-                        address: location.address,
+                        physicaladdress: location.address,  // Changed from 'address' to 'physicaladdress'
                         sitetype: location.type,
                         devicename: deviceName,
                         devicetype: deviceType,
@@ -1429,7 +1347,7 @@
             allData.forEach(item => {
                 if (item.devicename) {
                     ws_data.push([
-                        item.siteid || '', item.sitename || '', item.address || '', item.sitetype || '',
+                        item.siteid || '', item.sitename || '', item.physicaladdress || '', item.sitetype || '',
                         item.devicename || '', item.devicetype || '', item.managementip || '',
                         item.username || '', item.password || '', item.status || '',
                         item.circuitid || '', item.ispprovider || '', item.bandwidth || '',
@@ -1458,8 +1376,39 @@
             document.getElementById('exportDropdown')?.classList.remove('show');
         });
         
+        function downloadHTMLFile() {
+            // Get the entire HTML content
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Create a Blob with the HTML content
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            
+            // Create a download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'beamspeed-tracker.html';
+            
+            // Trigger the download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up the URL object
+            URL.revokeObjectURL(link.href);
+        }
+        
         window.onload = function() {
             checkAuth();
+            
+            // Add a download button if we're running in a browser
+            if (!sessionStorage.getItem('downloadButtonAdded')) {
+                const downloadBtn = document.createElement('button');
+                downloadBtn.textContent = '💾 Download This HTML File';
+                downloadBtn.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 10001; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
+                downloadBtn.onclick = downloadHTMLFile;
+                document.body.appendChild(downloadBtn);
+                sessionStorage.setItem('downloadButtonAdded', 'true');
+            }
         };
     </script>
 </body>
