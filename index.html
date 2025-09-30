@@ -732,15 +732,15 @@
                     // Track location-level record ID and data
                     if (!item.devicename) {
                         grouped[cityKey].locations[locationKey].locationId = item.id;
-                        grouped[cityKey].locations[locationKey].address = item.physicaladdress || item.address || '';
+                        grouped[cityKey].locations[locationKey].address = item.physicaladdress || '';
                         grouped[cityKey].locations[locationKey].sitetype = item.sitetype || '';
                     } else {
                         // Also update from device records if location record doesn't have address
-                        if (!grouped[cityKey].locations[locationKey].address) {
-                            grouped[cityKey].locations[locationKey].address = item.physicaladdress || item.address || '';
+                        if (!grouped[cityKey].locations[locationKey].address && item.physicaladdress) {
+                            grouped[cityKey].locations[locationKey].address = item.physicaladdress;
                         }
-                        if (!grouped[cityKey].locations[locationKey].sitetype) {
-                            grouped[cityKey].locations[locationKey].sitetype = item.sitetype || '';
+                        if (!grouped[cityKey].locations[locationKey].sitetype && item.sitetype) {
+                            grouped[cityKey].locations[locationKey].sitetype = item.sitetype;
                         }
                     }
                     if (item.devicename) {
