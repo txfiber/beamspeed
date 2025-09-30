@@ -133,6 +133,15 @@
         .editable { background: transparent; border: 1px solid transparent; padding: 5px 8px; width: 100%; min-width: 100px; transition: all 0.3s ease; }
         .editable:hover { background: white; border-color: #e5e7eb; }
         .editable:focus { outline: none; background: white; border-color: #4285f4; box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1); }
+        .password-container { position: relative; display: inline-block; width: 100%; }
+        .password-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6b7280; cursor: pointer; padding: 4px; font-size: 16px; z-index: 1; }
+        .password-toggle:hover { color: #4285f4; }
+        .floating-help { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .help-button { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; cursor: pointer; font-size: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; }
+        .help-button:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+        .quick-stats { position: absolute; bottom: 80px; right: 20px; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); display: none; min-width: 250px; }
+        .quick-stats.show { display: block; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .footer { background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #e9ecef; }
         .stats { display: flex; justify-content: space-around; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
         .stat-card { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.3s ease; }
@@ -592,13 +601,19 @@
         }
         
         function createDeviceRowHTML(device) {
+            const passwordId = `password-${device.id}`;
             return `
                 <td></td><td></td><td></td><td></td>
                 <td><input class="editable" value="${device.devicename || ''}" onchange="updateCell(${device.id}, 'devicename', this.value)"></td>
                 <td><input class="editable" value="${device.devicetype || ''}" onchange="updateCell(${device.id}, 'devicetype', this.value)"></td>
                 <td><input class="editable" value="${device.managementip || ''}" onchange="updateCell(${device.id}, 'managementip', this.value)"></td>
                 <td><input class="editable" value="${device.username || ''}" onchange="updateCell(${device.id}, 'username', this.value)"></td>
-                <td><input class="editable" type="password" value="${device.password || ''}" onchange="updateCell(${device.id}, 'password', this.value)"></td>
+                <td>
+                    <div class="password-container">
+                        <input class="editable" type="password" id="${passwordId}" value="${device.password || ''}" onchange="updateCell(${device.id}, 'password', this.value)">
+                        <button class="password-toggle" onclick="togglePassword('${passwordId}')">👁️</button>
+                    </div>
+                </td>
                 <td>
                     <select class="editable" onchange="updateCell(${device.id}, 'status', this.value)">
                         <option value="Active" ${device.status === 'Active' ? 'selected' : ''}>Active</option>
@@ -1376,6 +1391,23 @@
             document.getElementById('exportDropdown')?.classList.remove('show');
         });
         
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const button = input.nextElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                button.textContent = '🙈';
+            } else {
+                input.type = 'password';
+                button.textContent = '👁️';
+            }
+        }
+        
+        function toggleQuickStats() {
+            const stats = document.getElementById('floatingStats');
+            stats.classList.toggle('show');
+        }
+        
         function downloadHTMLFile() {
             // Get the entire HTML content
             const htmlContent = document.documentElement.outerHTML;
@@ -1400,14 +1432,29 @@
         window.onload = function() {
             checkAuth();
             
-            // Add a download button if we're running in a browser
-            if (!sessionStorage.getItem('downloadButtonAdded')) {
-                const downloadBtn = document.createElement('button');
-                downloadBtn.textContent = '💾 Download This HTML File';
-                downloadBtn.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 10001; padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
-                downloadBtn.onclick = downloadHTMLFile;
-                document.body.appendChild(downloadBtn);
-                sessionStorage.setItem('downloadButtonAdded', 'true');
+            // Add floating action button with quick stats instead of download button
+            if (!sessionStorage.getItem('fabAdded')) {
+                const fabContainer = document.createElement('div');
+                fabContainer.className = 'floating-help';
+                fabContainer.innerHTML = `
+                    <div class="quick-stats" id="floatingStats">
+                        <h4 style="margin-bottom: 15px; color: #4285f4;">Quick Actions</h4>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn btn-primary" style="width: 100%;" onclick="loadData()">🔄 Refresh Data</button>
+                            <button class="btn btn-success" style="width: 100%;" onclick="addRow()">➕ Add Site</button>
+                            <button class="btn btn-secondary" style="width: 100%;" onclick="addDevice()">📡 Add Device</button>
+                            <button class="btn btn-dashboard" style="width: 100%;" onclick="toggleView()">📊 Dashboard</button>
+                        </div>
+                        <hr style="margin: 15px 0; border: none; border-top: 1px solid #e5e7eb;">
+                        <div style="font-size: 12px; color: #6b7280;">
+                            <div>💡 Tip: Click on rows to expand/collapse</div>
+                            <div style="margin-top: 5px;">⌨️ Press Tab to navigate fields</div>
+                        </div>
+                    </div>
+                    <button class="help-button" onclick="toggleQuickStats()">⚡</button>
+                `;
+                document.body.appendChild(fabContainer);
+                sessionStorage.setItem('fabAdded', 'true');
             }
         };
     </script>
